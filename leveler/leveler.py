@@ -88,7 +88,7 @@ class Leveler(commands.Cog):
     @commands.command(name="profile", pass_context=True, no_pm=True)
     async def profile(self, ctx, *, user: discord.Member = None):
         """Displays a user profile."""
-        if user == None:
+        if user is None:
             user = ctx.message.author
         channel = ctx.message.channel
         guild = user.guild
@@ -158,7 +158,7 @@ class Leveler(commands.Cog):
     @commands.command(pass_context=True, no_pm=True)
     async def rank(self, ctx, user: discord.Member = None):
         """Displays the rank of a user."""
-        if user == None:
+        if user is None:
             user = ctx.message.author
         channel = ctx.message.channel
         guild = user.guild
@@ -225,7 +225,6 @@ class Leveler(commands.Cog):
             return
 
         users = []
-        board_type = ""
         user_stat = None
         if "-rep" in options and "-global" in options:
             title = "Global Rep Leaderboard for {}\n".format(self.bot.user.name)
@@ -273,7 +272,6 @@ class Leveler(commands.Cog):
                     user_stat = userinfo["rep"]
 
             board_type = "Rep"
-            print(await self._find_guild_rep_rank(user, guild))
             footer_text = "Your Rank: {}         {}: {}".format(
                 await self._find_guild_rep_rank(user, guild), board_type, user_stat
             )
@@ -281,7 +279,6 @@ class Leveler(commands.Cog):
         elif "-lvl" in options or "-level" in options:
             title = "Level Leaderboard for {}\n".format(guild.name)
             for userinfo in db.users.find({}):
-                userid = userinfo["user_id"]
                 if "servers" in userinfo and str(guild.id) in userinfo["servers"]:
                     level = userinfo["servers"][str(guild.id)]["level"]
                     try:
@@ -293,7 +290,6 @@ class Leveler(commands.Cog):
                     user_stat = userinfo["servers"][str(guild.id)]["level"]
 
             board_type = "Level"
-            print(await self._find_guild_rep_rank(user, guild))
             footer_text = "Your Rank: {}         {}: {}".format(
                 await self._find_guild_level_rank(user, guild), board_type, user_stat
             )
@@ -302,7 +298,6 @@ class Leveler(commands.Cog):
             title = "Exp Leaderboard for {}\n".format(guild.name)
             for userinfo in db.users.find({}):
                 try:
-                    userid = userinfo["user_id"]
                     if "servers" in userinfo and str(guild.id) in userinfo["servers"]:
                         guild_exp = 0
                         for i in range(userinfo["servers"][str(guild.id)]["level"]):
@@ -496,21 +491,18 @@ class Leveler(commands.Cog):
     async def profileset(self, ctx):
         """Profile options"""
         if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
-
             return
 
     @lvlset.group(name="rank", pass_context=True)
     async def rankset(self, ctx):
         """Rank options"""
         if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
-
             return
 
     @lvlset.group(name="levelup", pass_context=True)
     async def levelupset(self, ctx):
         """Level-Up options"""
         if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
-
             return
 
     @profileset.command(name="color", pass_context=True, no_pm=True)
@@ -538,20 +530,16 @@ class Leveler(commands.Cog):
             await ctx.send("**Text-only commands allowed.**")
             return
 
-        # get correct section for db query
-        if section == "rep":
-            section_name = "rep_color"
-        elif section == "exp":
-            section_name = "profile_exp_color"
-        elif section == "badge":
-            section_name = "badge_col_color"
-        elif section == "info":
-            section_name = "profile_info_color"
-        elif section == "all":
-            section_name = "all"
-        else:
-            await ctx.send("**Not a valid section. (rep, exp, badge, info, all)**")
-            return
+        all_sections = {
+            "rep": "rep_color",
+            "exp": "profile_exp_color",
+            "badge": "badge_col_color",
+            "info": "profile_info_color",
+            "all": "all"
+        }
+        section_name = all_sections.get(section, None)
+        if section_name is None:
+            return await ctx.send("**Not a valid section. (rep, exp, badge, info, all)**")
 
         # get correct color choice
         if color == "auto":
@@ -563,7 +551,7 @@ class Leveler(commands.Cog):
                 color_ranks = [0]  # most prominent color
             elif section == "info":
                 color_ranks = [random.randint(0, 1)]
-            elif section == "all":
+            else:
                 color_ranks = [random.randint(2, 3), random.randint(2, 3), 0, random.randint(0, 2)]
 
             hex_colors = await self._auto_color(userinfo["profile_background"], color_ranks)
@@ -630,7 +618,6 @@ class Leveler(commands.Cog):
                 )
             await ctx.send("**Colors for profile set.**")
         else:
-            print("update one")
             db.users.update_one(
                 {"user_id": str(str(user.id))}, {"$set": {section_name: set_color[0]}}
             )
@@ -2654,7 +2641,6 @@ class Leveler(commands.Cog):
             exp_color = (140, 140, 140, 230)
         draw_overlay.rectangle([(0, 20), (exp_width, 30)], fill=exp_color)  # Exp bar
         draw_overlay.rectangle([(0, 30), (bg_width, 31)], fill=(0, 0, 0, 255))  # Divider
-        # draw_overlay.rectangle([(0,35), (bg_width,100)], fill=(230,230,230,0)) # title overlay
         for i in range(0, 70):
             draw_overlay.rectangle(
                 [(0, height - i), (bg_width, height - i)], fill=(20, 20, 20, 255 - i * 3)
@@ -2691,7 +2677,6 @@ class Leveler(commands.Cog):
         total_gap = 6
         border = int(total_gap / 2)
         profile_size = lvl_circle_dia - total_gap
-        raw_length = profile_size * multiplier
         # put in profile picture
         mask = mask.resize((profile_size, profile_size), Image.ANTIALIAS)
         profile_image = profile_image.resize((profile_size, profile_size), Image.ANTIALIAS)
@@ -2802,10 +2787,6 @@ class Leveler(commands.Cog):
         bg_url = userinfo["levelup_background"]
         profile_url = user.avatar_url
 
-        # create image objects
-        bg_image = Image
-        profile_image = Image
-
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
         with open("temp/{}_temp_level_bg.png".format(str(user.id)), "wb") as f:
@@ -2886,8 +2867,6 @@ class Leveler(commands.Cog):
         profile_size = lvl_circle_dia - total_gap
         raw_length = profile_size * multiplier
         # put in profile picture
-        output = ImageOps.fit(profile_image, (raw_length, raw_length), centering=(0.5, 0.5))
-        output = output.resize((profile_size, profile_size), Image.ANTIALIAS)
         mask = mask.resize((profile_size, profile_size), Image.ANTIALIAS)
         profile_image = profile_image.resize((profile_size, profile_size), Image.ANTIALIAS)
         process.paste(profile_image, (circle_left + border, circle_top + border), mask)
@@ -2912,7 +2891,6 @@ class Leveler(commands.Cog):
     async def _handle_on_message(self, message):
         # try:
         text = message.content
-        channel = message.channel
         guild = message.guild
         user = message.author
         # creates user if doesn't exist, bots are not logged.
@@ -2934,8 +2912,6 @@ class Leveler(commands.Cog):
         ):
             await self._process_exp(message, userinfo, random.randint(15, 20))
             await self._give_chat_credit(user, guild)
-        # except AttributeError as e:
-        # pass
 
     async def _process_exp(self, message, userinfo, exp: int):
         guild = message.author.guild
@@ -2951,7 +2927,6 @@ class Leveler(commands.Cog):
             )
         except:
             pass
-        print(userinfo["total_exp"] + exp)
         if userinfo["servers"][str(guild.id)]["current_exp"] + exp >= required:
             userinfo["servers"][str(guild.id)]["level"] += 1
             db.users.update_one(
@@ -3093,7 +3068,6 @@ class Leveler(commands.Cog):
         targetid = str(user.id)
         users = []
         for userinfo in db.users.find({}):
-            userid = userinfo["user_id"]
             if "servers" in userinfo and str(guild.id) in userinfo["servers"]:
                 users.append((userinfo["user_id"], userinfo["rep"]))
 
@@ -3109,7 +3083,6 @@ class Leveler(commands.Cog):
         targetid = str(user.id)
         users = []
         for userinfo in db.users.find({}):
-            userid = userinfo["user_id"]
             if "servers" in userinfo and str(guild.id) in userinfo["servers"]:
                 users.append((userinfo["user_id"], userinfo["servers"][str(guild.id)]["level"]))
             sorted_list = sorted(users, key=operator.itemgetter(1), reverse=True)
@@ -3240,7 +3213,7 @@ class Leveler(commands.Cog):
 
     def _find_level(self, total_exp):
         # this is specific to the function above
-        return int((1 / 278) * (9 + math.sqrt(81 + 1112 * (total_exp))))
+        return int((1 / 278) * (9 + math.sqrt(81 + 1112 * total_exp)))
 
 
 # ------------------------------ setup ----------------------------------------
@@ -3252,6 +3225,7 @@ def check_folders():
     if not os.path.exists("temp"):
         print("Creating temp folder...")
         os.makedirs("temp")
+
 
 def check_files():
     default = {
