@@ -2214,7 +2214,6 @@ class Leveler(commands.Cog):
         total_gap = 6
         border = int(total_gap / 2)
         profile_size = lvl_circle_dia - total_gap
-        raw_length = profile_size * multiplier
         mask = mask.resize((profile_size, profile_size), Image.ANTIALIAS)
         profile_image = profile_image.resize((profile_size, profile_size), Image.ANTIALIAS)
         process.paste(profile_image, (circle_left + border, circle_top + border), mask)
@@ -2246,7 +2245,6 @@ class Leveler(commands.Cog):
             [(0, 324), (340, 390)], fill=(info_fill[0], info_fill[1], info_fill[2], 255)
         )  # box
 
-        # rep_text = "{} REP".format(userinfo["rep"])
         rep_text = "{}".format(userinfo["rep"])
         _write_unicode("❤", 257, 9, rep_fnt, rep_u_fnt, info_text_color)
         draw.text(
@@ -2256,7 +2254,6 @@ class Leveler(commands.Cog):
             fill=info_text_color,
         )  # Exp Text
 
-        lvl_left = 100
         label_align = 362  # vertical
         draw.text(
             (self._center(0, 140, "    RANK", label_fnt), label_align),
@@ -2344,8 +2341,6 @@ class Leveler(commands.Cog):
         margin = 140
         txt_color = self._contrast(info_fill, white_color, dark_color)
         for line in textwrap.wrap(userinfo["info"], width=32):
-            # for line in textwrap.wrap('userinfo["info"]', width=200):
-            # draw.text((margin, offset), line, font=text_fnt, fill=white_color)
             _write_unicode(line, margin, offset, text_fnt, text_u_fnt, txt_color)
             offset += text_fnt.getsize(line)[1] + 2
 
@@ -2365,7 +2360,6 @@ class Leveler(commands.Cog):
             vert_pos = 172
             right_shift = 0
             left = 9 + right_shift
-            right = 52 + right_shift
             size = 38
             total_gap = 4  # /2
             hor_gap = 6
@@ -2867,7 +2861,6 @@ class Leveler(commands.Cog):
         process.paste(lvl_circle, (circle_left, circle_top), lvl_bar_mask)
 
         profile_size = lvl_circle_dia - total_gap
-        raw_length = profile_size * multiplier
         # put in profile picture
         mask = mask.resize((profile_size, profile_size), Image.ANTIALIAS)
         profile_image = profile_image.resize((profile_size, profile_size), Image.ANTIALIAS)
