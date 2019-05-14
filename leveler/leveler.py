@@ -77,7 +77,8 @@ class Leveler(commands.Cog):
         if "leveler" not in dbs:
             self.pop_database()
 
-    def pop_database(self):
+    @staticmethod
+    def pop_database():
         if os.path.exists("users"):
             for userid in os.listdir(user_directory):
                 userinfo = fileIO("users/{}/info.json".format(str(userid)), "load")
@@ -476,7 +477,8 @@ class Leveler(commands.Cog):
         )
         await ctx.send(embed=em)
 
-    def _rgb_to_hex(self, rgb):
+    @staticmethod
+    def _rgb_to_hex(rgb):
         rgb = tuple(rgb[:3])
         return "#%02x%02x%02x" % rgb
 
@@ -484,7 +486,6 @@ class Leveler(commands.Cog):
     async def lvlset(self, ctx):
         """Profile Configuration Options"""
         if ctx.invoked_subcommand is None:
-
             return
 
     @lvlset.group(name="profile", pass_context=True)
@@ -808,7 +809,8 @@ class Leveler(commands.Cog):
         return colors  # returns array
 
     # converts hex to rgb
-    def _hex_to_rgb(self, hex_num: str, a: int):
+    @staticmethod
+    def _hex_to_rgb(hex_num: str, a: int):
         h = hex_num.lstrip("#")
 
         # if only 3 characters are given
@@ -816,7 +818,7 @@ class Leveler(commands.Cog):
             expand = "".join([x * 2 for x in str(h)])
             h = expand
 
-        colors = [int(h[i : i + 2], 16) for i in (0, 2, 4)]
+        colors = [int(h[i:i + 2], 16) for i in (0, 2, 4)]
         colors.append(a)
         return tuple(colors)
 
@@ -1121,7 +1123,6 @@ class Leveler(commands.Cog):
     @lvladmin.command(pass_context=True, no_pm=True)
     async def setlevel(self, ctx, user: discord.Member, level: int):
         """Set a user's level. (What a cheater C:)."""
-        org_user = ctx.message.author
         guild = user.guild
         channel = ctx.message.channel
         # creates user if doesn't exist
@@ -1182,7 +1183,7 @@ class Leveler(commands.Cog):
                 image = await r.content.read()
             with open("test.png", "wb") as f:
                 f.write(image)
-            image = Image.open("test.png").convert("RGBA")
+            Image.open("test.png").convert("RGBA")
             os.remove("test.png")
             return True
         except:
@@ -1305,11 +1306,10 @@ class Leveler(commands.Cog):
     async def badge(self, ctx):
         """Badge Configuration Options"""
         if ctx.invoked_subcommand is None:
-
             return
 
     @badge.command(name="available", pass_context=True, no_pm=True)
-    async def available(self, ctx, global_badge: str = None):
+    async def available(self, ctx):
         """Get a list of available badges for guild or 'global'."""
         user = ctx.message.author
         guild = ctx.message.guild
@@ -1347,11 +1347,11 @@ class Leveler(commands.Cog):
             em.description = msg
 
             total_pages = 0
-            for page in pagify(msg, ["\n"]):
+            for _ in pagify(msg, ["\n"]):
                 total_pages += 1
 
             counter = 1
-            for page in pagify(msg, ["\n"]):
+            for _ in pagify(msg, ["\n"]):
                 if index == 0:
                     await ctx.send(title_text, embed=em)
                 else:
@@ -1640,10 +1640,10 @@ class Leveler(commands.Cog):
         await ctx.send("**Badge type set to `{}`**".format(name.lower()))
         fileIO("settings.json", "save", self.settings)
 
+    @staticmethod
     def _is_hex(self, color: str):
         if color != None and len(color) != 4 and len(color) != 7:
             return False
-
         reg_ex = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
         return re.search(reg_ex, str(color))
 
@@ -1800,7 +1800,6 @@ class Leveler(commands.Cog):
     async def role(self, ctx):
         """Admin Background Configuration"""
         if ctx.invoked_subcommand is None:
-
             return
 
     @checks.mod_or_permissions(manage_roles=True)
@@ -1903,7 +1902,6 @@ class Leveler(commands.Cog):
     async def lvladminbg(self, ctx):
         """Admin Background Configuration"""
         if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
-
             return
 
     @checks.is_owner()
@@ -2488,22 +2486,25 @@ class Leveler(commands.Cog):
             pass
 
     # returns color that contrasts better in background
-    def _contrast(self, bg_color, color1, color2):
-        color1_ratio = self._contrast_ratio(bg_color, color1)
-        color2_ratio = self._contrast_ratio(bg_color, color2)
+    @staticmethod
+    def _contrast(bg_color, color1, color2):
+        color1_ratio = Leveler._contrast_ratio(bg_color, color1)
+        color2_ratio = Leveler._contrast_ratio(bg_color, color2)
         if color1_ratio >= color2_ratio:
             return color1
         else:
             return color2
 
-    def _luminance(self, color):
+    @staticmethod
+    def _luminance(color):
         # convert to greyscale
         luminance = float((0.2126 * color[0]) + (0.7152 * color[1]) + (0.0722 * color[2]))
         return luminance
 
-    def _contrast_ratio(self, bgcolor, foreground):
-        f_lum = float(self._luminance(foreground) + 0.05)
-        bg_lum = float(self._luminance(bgcolor) + 0.05)
+    @staticmethod
+    def _contrast_ratio(bgcolor, foreground):
+        f_lum = float(Leveler._luminance(foreground) + 0.05)
+        bg_lum = float(Leveler._luminance(bgcolor) + 0.05)
 
         if bg_lum > f_lum:
             return bg_lum / f_lum
@@ -2521,9 +2522,8 @@ class Leveler(commands.Cog):
                 max_length,
             )
 
-    async def _add_dropshadow(
-        self, image, offset=(4, 4), background=0x000, shadow=0x0F0, border=3, iterations=5
-    ):
+    @staticmethod
+    async def _add_dropshadow(image, offset=(4, 4), background=0x000, shadow=0x0F0, border=3, iterations=5):
         totalWidth = image.size[0] + abs(offset[0]) + 2 * border
         totalHeight = image.size[1] + abs(offset[1]) + 2 * border
         back = Image.new(image.mode, (totalWidth, totalHeight), background)
@@ -2756,7 +2756,8 @@ class Leveler(commands.Cog):
         result = Image.alpha_composite(result, process)
         result.save(munge_path("temp/{}_rank.png".format(str(user.id))), "PNG", quality=100)
 
-    def _add_corners(self, im, rad, multiplier=6):
+    @staticmethod
+    def _add_corners(im, rad, multiplier=6):
         raw_length = rad * 2 * multiplier
         circle = Image.new("L", (raw_length, raw_length), 0)
         draw = ImageDraw.Draw(circle)
@@ -3182,7 +3183,8 @@ class Leveler(commands.Cog):
         except AttributeError as e:
             pass
 
-    def _truncate_text(self, text, max_length):
+    @staticmethod
+    def _truncate_text(text, max_length):
         if len(text) > max_length:
             if text.strip("$").isdigit():
                 text = int(text.strip("$"))
@@ -3191,22 +3193,26 @@ class Leveler(commands.Cog):
         return text
 
     # finds the the pixel to center the text
-    def _center(self, start, end, text, font):
+    @staticmethod
+    def _center(start, end, text, font):
         dist = end - start
         width = font.getsize(text)[0]
         start_pos = start + ((dist - width) / 2)
         return int(start_pos)
 
     # calculates required exp for next level
-    def _required_exp(self, level: int):
+    @staticmethod
+    def _required_exp(level: int):
         if level < 0:
             return 0
         return 139 * level + 65
 
-    def _level_exp(self, level: int):
+    @staticmethod
+    def _level_exp(level: int):
         return level * 65 + 139 * level * (level - 1) // 2
 
-    def _find_level(self, total_exp):
+    @staticmethod
+    def _find_level(total_exp):
         # this is specific to the function above
         return int((1 / 278) * (9 + math.sqrt(81 + 1112 * total_exp)))
 
