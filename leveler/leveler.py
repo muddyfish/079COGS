@@ -3211,75 +3211,7 @@ class Leveler(commands.Cog):
         return int((1 / 278) * (9 + math.sqrt(81 + 1112 * total_exp)))
 
 
-# ------------------------------ setup ----------------------------------------
-def check_folders():
-    if not os.path.exists("data/leveler"):
-        print("Creating data/leveler folder...")
-        os.makedirs("data/leveler")
-
-    if not os.path.exists("temp"):
-        print("Creating temp folder...")
-        os.makedirs("temp")
-
-
-def check_files():
-    default = {
-        "bg_price": 0,
-        "lvl_msg": [],  # enabled lvl msg guilds
-        "disabled_guilds": [],
-        "badge_type": "circles",
-        "mention": True,
-        "text_only": [],
-        "guild_roles": {},
-        "rep_cooldown": 43200,
-        "chat_cooldown": 120,
-    }
-
-    settings_path = "settings.json"
-    if not os.path.isfile(settings_path):
-        print("Creating default leveler settings.json...")
-        fileIO(settings_path, "save", default)
-
-    bgs = {
-        "profile": {
-            "alice": "http://i.imgur.com/MUSuMao.png",
-            "bluestairs": "http://i.imgur.com/EjuvxjT.png",
-            "lamp": "http://i.imgur.com/0nQSmKX.jpg",
-            "coastline": "http://i.imgur.com/XzUtY47.jpg",
-            "redblack": "http://i.imgur.com/74J2zZn.jpg",
-            "default": "http://i.imgur.com/8T1FUP5.jpg",
-            "iceberg": "http://i.imgur.com/8KowiMh.png",
-            "miraiglasses": "http://i.imgur.com/2Ak5VG3.png",
-            "miraikuriyama": "http://i.imgur.com/jQ4s4jj.png",
-            "mountaindawn": "http://i.imgur.com/kJ1yYY6.jpg",
-            "waterlilies": "http://i.imgur.com/qwdcJjI.jpg",
-            "greenery": "http://i.imgur.com/70ZH6LX.png",
-        },
-        "rank": {
-            "aurora": "http://i.imgur.com/gVSbmYj.jpg",
-            "default": "http://i.imgur.com/SorwIrc.jpg",
-            "nebula": "http://i.imgur.com/V5zSCmO.jpg",
-            "mountain": "http://i.imgur.com/qYqEUYp.jpg",
-            "abstract": "http://i.imgur.com/70ZH6LX.png",
-            "city": "http://i.imgur.com/yr2cUM9.jpg",
-        },
-        "levelup": {"default": "http://i.imgur.com/eEFfKqa.jpg"},
-    }
-
-    bgs_path = "backgrounds.json"
-    if not os.path.isfile(bgs_path):
-        print("Creating default leveler backgrounds.json...")
-        fileIO(bgs_path, "save", bgs)
-
-    f = "badges.json"
-    if not fileIO(f, "check"):
-        print("Creating badges.json...")
-        fileIO(f, "save", {})
-
-
 def setup(bot):
-    check_folders()
-    check_files()
     n = Leveler(bot)
     bot.add_listener(n._handle_on_message, "on_message")
     bot.add_cog(n)
