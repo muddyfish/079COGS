@@ -769,7 +769,7 @@ class Leveler(commands.Cog):
         await ctx.send("**Color for level-up {} set.**".format(section))
 
     # uses k-means algorithm to find color from bg, rank is abundance of color, descending
-    async def _auto_color(self, url: str, ranks):
+    async def _auto_color(self, ctx, url: str, ranks):
         phrases = ["Calculating colors..."]  # in case I want more
         # try:
         await ctx.send("**{}**".format(random.choice(phrases)))
@@ -1053,7 +1053,6 @@ class Leveler(commands.Cog):
 
     async def _process_purchase(self, ctx):
         user = ctx.message.author
-        guild = ctx.message.guild
 
         try:
             if self.settings["bg_price"] != 0:
@@ -1109,7 +1108,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladmin.command(no_pm=True)
-    async def setprice(self, price: int):
+    async def setprice(self, ctx, price: int):
         """Set a price for background changes."""
         if price < 0:
             await ctx.send("**That is not a valid background price.**")
@@ -1167,9 +1166,9 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladmin.command(no_pm=True)
-    async def mention(self):
+    async def mention(self, ctx):
         """Toggle mentions on messages."""
-        if "mention" not in self.settings.keys() or self.settings["mention"] == True:
+        if "mention" not in self.settings.keys() or self.settings["mention"] is True:
             self.settings["mention"] = False
             await ctx.send("**Mentions disabled.**")
         else:
@@ -1215,7 +1214,7 @@ class Leveler(commands.Cog):
         if "text_only" not in self.settings.keys():
             self.settings["text_only"] = []
 
-        if all != None:
+        if all is not None:
             if str(user.id) == self.owner:
                 if all == "disableall":
                     self.settings["text_only"] = []
@@ -1247,7 +1246,7 @@ class Leveler(commands.Cog):
         if not isinstance(self.settings["lvl_msg"], list):
             self.settings["lvl_msg"] = []
 
-        if all != None:
+        if all is not None:
             if str(user.id) == self.owner:
                 if all == "disableall":
                     self.settings["lvl_msg"] = []
@@ -1273,12 +1272,14 @@ class Leveler(commands.Cog):
     async def lvlprivate(self, ctx, all: str = None):
         """Toggles if lvl alert is a private message to the user."""
         guild = ctx.message.guild
+        user = ctx.message.author
+
         # deals with ENABLED array, not disabled
 
         if "private_lvl_msg" not in self.settings.keys():
             self.settings["private_lvl_msg"] = []
 
-        if all != None:
+        if all is not None:
             if str(user.id) == self.owner:
                 if all == "disableall":
                     self.settings["private_lvl_msg"] = []
