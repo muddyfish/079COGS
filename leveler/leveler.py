@@ -182,7 +182,7 @@ class Leveler(commands.Cog):
 
             await channel.send(
                 "**Ranking & Statistics for {}**".format(self._is_mention(user)),
-                file=discord.File("temp/{}_rank.png".format(str(user.id))),
+                file=discord.File(munge_path("temp/{}_rank.png".format(str(user.id)))),
             )
             db.users.update_one(
                 {"user_id": str(str(user.id))},
@@ -373,7 +373,6 @@ class Leveler(commands.Cog):
     @commands.command(pass_context=True, no_pm=True)
     async def rep(self, ctx, user: discord.Member = None):
         """Gives a reputation point to a designated player."""
-        channel = ctx.message.channel
         org_user = ctx.message.author
         guild = org_user.guild
         # creates user if doesn't exist
@@ -426,7 +425,6 @@ class Leveler(commands.Cog):
 
         if not user:
             user = ctx.message.author
-        guild = ctx.message.guild
         userinfo = db.users.find_one({"user_id": str(str(user.id))})
 
         guild = ctx.message.guild
@@ -2567,17 +2565,15 @@ class Leveler(commands.Cog):
 
     async def draw_rank(self, user, guild):
         # fonts
-        font_thin_file = "fonts/Uni_Sans_Thin.ttf"
-        font_heavy_file = "fonts/Uni_Sans_Heavy.ttf"
-        font_file = "fonts/SourceSansPro-Regular.ttf"
-        font_bold_file = "fonts/SourceSansPro-Semibold.ttf"
+        font_thin_file = munge_path("fonts/Uni_Sans_Thin.ttf")
+        font_heavy_file = munge_path("fonts/Uni_Sans_Heavy.ttf")
+        font_bold_file = munge_path("fonts/SourceSansPro-Semibold.ttf")
 
         name_fnt = ImageFont.truetype(font_heavy_file, 24)
         name_u_fnt = ImageFont.truetype(font_unicode_file, 24)
         label_fnt = ImageFont.truetype(font_bold_file, 16)
         exp_fnt = ImageFont.truetype(font_bold_file, 9)
         large_fnt = ImageFont.truetype(font_thin_file, 24)
-        large_bold_fnt = ImageFont.truetype(font_bold_file, 24)
         symbol_u_fnt = ImageFont.truetype(font_unicode_file, 15)
 
         def _write_unicode(text, init_x, y, font, unicode_font, fill):
@@ -2598,12 +2594,10 @@ class Leveler(commands.Cog):
         guild_icon_url = guild.icon_url
 
         # create image objects
-        bg_image = Image
-        profile_image = Image
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open("temp/test_temp_rank_bg.png".format(str(user.id)), "wb") as f:
+        with open(munge_path("temp/test_temp_rank_bg.png".format(str(user.id))), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -2611,7 +2605,7 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("temp/test_temp_rank_profile.png".format(str(user.id)), "wb") as f:
+        with open(munge_path("temp/test_temp_rank_profile.png".format(str(user.id))), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(guild_icon_url) as r:
@@ -2619,17 +2613,14 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("temp/test_temp_guild_icon.png".format(str(user.id)), "wb") as f:
+        with open(munge_path("temp/test_temp_guild_icon.png".format(str(user.id))), "wb") as f:
             f.write(image)
 
         bg_image = Image.open(
-            "temp/test_temp_rank_bg.png".format(str(user.id))
+            munge_path("temp/test_temp_rank_bg.png".format(str(user.id)))
         ).convert("RGBA")
         profile_image = Image.open(
-            "temp/test_temp_rank_profile.png".format(str(user.id))
-        ).convert("RGBA")
-        guild_image = Image.open(
-            "temp/test_temp_guild_icon.png".format(str(user.id))
+            munge_path("temp/test_temp_rank_profile.png".format(str(user.id)))
         ).convert("RGBA")
 
         # set canvas
@@ -2644,7 +2635,6 @@ class Leveler(commands.Cog):
         # info section
         info_section = Image.new("RGBA", (bg_width, height), bg_color)
         info_section_process = Image.new("RGBA", (bg_width, height), bg_color)
-        draw_info = ImageDraw.Draw(info_section)
         # puts in background
         bg_image = bg_image.resize((width, height), Image.ANTIALIAS)
         bg_image = bg_image.crop((0, 0, width, height))
@@ -2691,13 +2681,6 @@ class Leveler(commands.Cog):
         lvl_circle = Image.new("RGBA", (raw_length, raw_length))
         draw_lvl_circle = ImageDraw.Draw(lvl_circle)
         draw_lvl_circle.ellipse([0, 0, raw_length, raw_length], fill=(250, 250, 250, 250))
-        # determines exp bar color
-        """
-        if "rank_exp_color" not in userinfo.keys() or not userinfo["rank_exp_color"]:
-            exp_fill = (255, 255, 255, 230)
-        else:
-            exp_fill = tuple(userinfo["rank_exp_color"])"""
-        exp_fill = (255, 255, 255, 230)
 
         # put on profile circle background
         lvl_circle = lvl_circle.resize((lvl_circle_dia, lvl_circle_dia), Image.ANTIALIAS)
@@ -2710,8 +2693,6 @@ class Leveler(commands.Cog):
         profile_size = lvl_circle_dia - total_gap
         raw_length = profile_size * multiplier
         # put in profile picture
-        output = ImageOps.fit(profile_image, (raw_length, raw_length), centering=(0.5, 0.5))
-        output = output.resize((profile_size, profile_size), Image.ANTIALIAS)
         mask = mask.resize((profile_size, profile_size), Image.ANTIALIAS)
         profile_image = profile_image.resize((profile_size, profile_size), Image.ANTIALIAS)
         process.paste(profile_image, (circle_left + border, circle_top + border), mask)
@@ -2746,7 +2727,6 @@ class Leveler(commands.Cog):
             font=label_fnt,
             fill=info_text_color,
         )  # Rank
-        local_symbol = u"\U0001F3E0 "
         if "linux" in platform.system().lower():
             local_symbol = u"\U0001F3E0 "
         else:
@@ -2793,7 +2773,7 @@ class Leveler(commands.Cog):
         )  # Rank
 
         result = Image.alpha_composite(result, process)
-        result.save("temp/{}_rank.png".format(str(user.id)), "PNG", quality=100)
+        result.save(munge_path("temp/{}_rank.png".format(str(user.id))), "PNG", quality=100)
 
     def _add_corners(self, im, rad, multiplier=6):
         raw_length = rad * 2 * multiplier
