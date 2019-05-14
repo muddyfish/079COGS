@@ -2,11 +2,15 @@ import discord
 from redbot.core import commands
 from discord.utils import find
 from redbot.core.utils.chat_formatting import pagify
-import platform, asyncio, string, operator, random, textwrap
-import os, re, aiohttp
+import platform
+import string
+import operator
+import random
+import textwrap
+import os
+import re
+import aiohttp
 import math
-import redbot.cogs.bank
-from redbot.core.utils.settings import Settings
 from redbot.core.utils.dataIO import fileIO as _fileIO
 from redbot.core import checks, bank
 
@@ -22,7 +26,6 @@ def fileIO(path, *args):
     return _fileIO(munge_path(path), *args)
 
 try:
-    import pymongo
     from pymongo import MongoClient
 except:
     raise RuntimeError("Can't load pymongo. Do 'pip3 install pymongo'.")
@@ -80,12 +83,6 @@ class Leveler(commands.Cog):
                 userinfo = fileIO("users/{}/info.json".format(str(userid)), "load")
                 userinfo["user_id"] = str(userid)
                 db.users.insert_one(userinfo)
-
-    def create_global(self):
-
-        userinfo = fileIO("users/{}/info.json".format(str(userid)), "load")
-        userinfo["user_id"] = str(userid)
-        db.users.insert_one(userinfo)
 
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.command(name="profile", pass_context=True, no_pm=True)
@@ -822,8 +819,6 @@ class Leveler(commands.Cog):
 
             colors.append("".join(format(c, "02x") for c in peak))
         return colors  # returns array
-        # except:
-        # await ctx.send("```Error or no scipy. Install scipy doing 'pip3 install numpy' and 'pip3 install scipy' or read here: https://github.com/AznStevy/Maybe-Useful-Cogs/blob/master/README.md```")
 
     # converts hex to rgb
     def _hex_to_rgb(self, hex_num: str, a: int):
@@ -838,19 +833,6 @@ class Leveler(commands.Cog):
         colors.append(a)
         return tuple(colors)
 
-    # dampens the color given a parameter
-    def _moderate_color(self, rgb, a, moderate_num):
-        new_colors = []
-        for color in rgb[:3]:
-            if color > 128:
-                color -= moderate_num
-            else:
-                color += moderate_num
-            new_colors.append(color)
-        new_colors.append(230)
-
-        return tuple(new_colors)
-
     @profileset.command(pass_context=True, no_pm=True)
     async def info(self, ctx, *, info):
         """Set your user info."""
@@ -858,7 +840,6 @@ class Leveler(commands.Cog):
         guild = ctx.message.guild
         # creates user if doesn't exist
         await self._create_user(user, guild)
-        userinfo = db.users.find_one({"user_id": str(str(user.id))})
         max_char = 150
 
         if str(guild.id) in self.settings["disabled_guilds"]:
@@ -880,7 +861,6 @@ class Leveler(commands.Cog):
         guild = ctx.message.guild
         # creates user if doesn't exist
         await self._create_user(user, guild)
-        userinfo = db.users.find_one({"user_id": str(str(user.id))})
 
         if str(guild.id) in self.settings["disabled_guilds"]:
             await ctx.send("Leveler commands for this guild are disabled.")
@@ -911,7 +891,6 @@ class Leveler(commands.Cog):
         guild = ctx.message.guild
         # creates user if doesn't exist
         await self._create_user(user, guild)
-        userinfo = db.users.find_one({"user_id": str(str(user.id))})
 
         if str(guild.id) in self.settings["disabled_guilds"]:
             await ctx.send("Leveler commands for this guild are disabled.")
@@ -942,7 +921,6 @@ class Leveler(commands.Cog):
         guild = ctx.message.guild
         # creates user if doesn't exist
         await self._create_user(user, guild)
-        userinfo = db.users.find_one({"user_id": str(str(user.id))})
 
         if str(guild.id) in self.settings["disabled_guilds"]:
             await ctx.send("Leveler commands for this guild are disabled.")
@@ -992,7 +970,6 @@ class Leveler(commands.Cog):
     async def lvladmin(self, ctx):
         """Admin Toggle Features"""
         if ctx.invoked_subcommand is None:
-
             return
 
     @checks.admin_or_permissions(manage_guild=True)
@@ -1214,8 +1191,6 @@ class Leveler(commands.Cog):
         fileIO("settings.json", "save", self.settings)
 
     async def _valid_image_url(self, url):
-        max_byte = 1000
-
         try:
             async with self.session.get(url) as r:
                 image = await r.content.read()
@@ -2224,13 +2199,6 @@ class Leveler(commands.Cog):
         # draw filter
         draw.rectangle([(0, 0), (340, 340)], fill=(0, 0, 0, 10))
 
-        # draw transparent overlay
-        vert_pos = 305
-        left_pos = 0
-        right_pos = 340
-        title_height = 30
-        gap = 3
-
         draw.rectangle([(0, 134), (340, 325)], fill=info_fill_tx)  # general content
         # draw profile circle
         multiplier = 8
@@ -2260,8 +2228,6 @@ class Leveler(commands.Cog):
         border = int(total_gap / 2)
         profile_size = lvl_circle_dia - total_gap
         raw_length = profile_size * multiplier
-        output = ImageOps.fit(profile_image, (raw_length, raw_length), centering=(0.5, 0.5))
-        output = output.resize((profile_size, profile_size), Image.ANTIALIAS)
         mask = mask.resize((profile_size, profile_size), Image.ANTIALIAS)
         profile_image = profile_image.resize((profile_size, profile_size), Image.ANTIALIAS)
         process.paste(profile_image, (circle_left + border, circle_top + border), mask)
@@ -2755,8 +2721,6 @@ class Leveler(commands.Cog):
         white_color = (220, 220, 220, 255)
 
         # name
-        left_text_align = 130
-        name_color = 0
         _write_unicode(
             self._truncate_text(self._name(user, 20), 20), 100, 0, name_fnt, name_u_fnt, grey_color
         )  # Name
@@ -3308,20 +3272,6 @@ def check_folders():
     if not os.path.exists("temp"):
         print("Creating temp folder...")
         os.makedirs("temp")
-
-
-def transfer_info():
-    try:
-        users = fileIO("users.json", "load")
-        for user_id in users:
-            os.makedirs("users/{}".format(user_id))
-            # create info.json
-            f = "users/{}/info.json".format(user_id)
-            if not fileIO(f, "check"):
-                fileIO(f, "save", users[user_id])
-    except:
-        pass
-
 
 def check_files():
     default = {
