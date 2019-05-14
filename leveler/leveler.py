@@ -636,6 +636,8 @@ class Leveler(commands.Cog):
         default_info_color = (30, 30, 30, 200)
         white_info_color = (150, 150, 150, 180)
         default_exp = (255, 255, 255, 230)
+        default_rep = (92, 130, 203, 230)
+        default_badge = (128, 151, 165, 230)
         default_a = 200
 
         if str(guild.id) in self.settings["disabled_guilds"]:
@@ -1905,7 +1907,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladminbg.command(no_pm=True)
-    async def addprofilebg(self, name: str, url: str):
+    async def addprofilebg(self, ctx, name: str, url: str):
         """Add a profile background. Proportions: (290px x 290px)"""
         if name in self.backgrounds["profile"].keys():
             await ctx.send("**That profile background name already exists!**")
@@ -1918,7 +1920,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladminbg.command(no_pm=True)
-    async def addrankbg(self, name: str, url: str):
+    async def addrankbg(self, ctx, name: str, url: str):
         """Add a rank background. Proportions: (360px x 100px)"""
         if name in self.backgrounds["rank"].keys():
             await ctx.send("**That rank background name already exists!**")
@@ -1931,7 +1933,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladminbg.command(no_pm=True)
-    async def addlevelbg(self, name: str, url: str):
+    async def addlevelbg(self, ctx, name: str, url: str):
         """Add a level-up background. Proportions: (85px x 105px)"""
         if name in self.backgrounds["levelup"].keys():
             await ctx.send("**That level-up background name already exists!**")
@@ -1970,7 +1972,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladminbg.command(no_pm=True)
-    async def delprofilebg(self, name: str):
+    async def delprofilebg(self, ctx, name: str):
         """Delete a profile background."""
         if name in self.backgrounds["profile"].keys():
             del self.backgrounds["profile"][name]
@@ -1981,7 +1983,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladminbg.command(no_pm=True)
-    async def delrankbg(self, name: str):
+    async def delrankbg(self, ctx, name: str):
         """Delete a rank background."""
         if name in self.backgrounds["rank"].keys():
             del self.backgrounds["rank"][name]
@@ -1992,7 +1994,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @lvladminbg.command(no_pm=True)
-    async def dellevelbg(self, name: str):
+    async def dellevelbg(self, ctx, name: str):
         """Delete a level background."""
         if name in self.backgrounds["levelup"].keys():
             del self.backgrounds["levelup"][name]
@@ -2083,7 +2085,6 @@ class Leveler(commands.Cog):
         font_heavy_file = munge_path("fonts", "Uni_Sans_Heavy.ttf")
         font_file = munge_path("fonts", "SourceSansPro-Regular.ttf")
         font_bold_file = munge_path("fonts", "SourceSansPro-Semibold.ttf")
-
 
         name_fnt = ImageFont.truetype(font_heavy_file, 30)
         name_u_fnt = ImageFont.truetype(font_unicode_file, 30)
