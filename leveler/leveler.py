@@ -7,8 +7,15 @@ import os, re, aiohttp
 import math
 import redbot.cogs.bank
 from redbot.core.utils.settings import Settings
-from redbot.core.utils.dataIO import fileIO
+from redbot.core.utils.dataIO import fileIO as _fileIO
 from redbot.core import checks, bank
+
+
+module_path = os.path.dirname(os.path.abspath(__file__))
+
+
+def fileIO(path, *args):
+    return _fileIO(os.path.join(module_path, "data", path), *args)
 
 try:
     import pymongo
@@ -28,15 +35,15 @@ except:
 import time
 
 # fonts
-font_file = "data/leveler/fonts/font.ttf"
-font_bold_file = "data/leveler/fonts/font_bold.ttf"
-font_unicode_file = "data/leveler/fonts/unicode.ttf"
+font_file = "fonts/font.ttf"
+font_bold_file = "fonts/font_bold.ttf"
+font_unicode_file = "fonts/unicode.ttf"
 
 # Credits (None)
 bg_credits = {}
 
 # directory
-user_directory = "data/leveler/users"
+user_directory = "users"
 
 prefix = "!"
 default_avatar_url = "http://i.imgur.com/XPDO9VH.jpg"
@@ -53,10 +60,10 @@ class Leveler(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.backgrounds = fileIO("data/leveler/backgrounds.json", "load")
-        self.badges = fileIO("data/leveler/badges.json", "load")
-        self.settings = fileIO("data/leveler/settings.json", "load")
-        bot_settings = fileIO("data/red/settings.json", "load")
+        self.backgrounds = fileIO("backgrounds.json", "load")
+        self.badges = fileIO("badges.json", "load")
+        self.settings = fileIO("settings.json", "load")
+        bot_settings = fileIO("red_settings.json", "load")
         self.owner = bot_settings["OWNER"]
         self.session = aiohttp.ClientSession(loop=self.bot.loop)
         dbs = client.database_names()
@@ -64,15 +71,15 @@ class Leveler(commands.Cog):
             self.pop_database()
 
     def pop_database(self):
-        if os.path.exists("data/leveler/users"):
+        if os.path.exists("users"):
             for userid in os.listdir(user_directory):
-                userinfo = fileIO("data/leveler/users/{}/info.json".format(str(userid)), "load")
+                userinfo = fileIO("users/{}/info.json".format(str(userid)), "load")
                 userinfo["user_id"] = str(userid)
                 db.users.insert_one(userinfo)
 
     def create_global(self):
 
-        userinfo = fileIO("data/leveler/users/{}/info.json".format(str(userid)), "load")
+        userinfo = fileIO("users/{}/info.json".format(str(userid)), "load")
         userinfo["user_id"] = str(userid)
         db.users.insert_one(userinfo)
 
@@ -104,13 +111,13 @@ class Leveler(commands.Cog):
 
             await channel.send(
                 "**User profile for {}**".format(self._is_mention(user)),
-                file=discord.File("data/leveler/temp/{}_profile.png".format(str(user.id))),
+                file=discord.File("temp/{}_profile.png".format(str(user.id))),
             )
             db.users.update_one(
                 {"user_id": str(str(user.id))}, {"$set": {"profile_block": curr_time}}, upsert=True
             )
             try:
-                os.remove("data/leveler/temp/{}_profile.png".format(str(user.id)))
+                os.remove("temp/{}_profile.png".format(str(user.id)))
             except:
                 pass
 
@@ -174,7 +181,7 @@ class Leveler(commands.Cog):
 
             await channel.send(
                 "**Ranking & Statistics for {}**".format(self._is_mention(user)),
-                file=discord.File("data/leveler/temp/{}_rank.png".format(str(user.id))),
+                file=discord.File("temp/{}_rank.png".format(str(user.id))),
             )
             db.users.update_one(
                 {"user_id": str(str(user.id))},
@@ -182,7 +189,7 @@ class Leveler(commands.Cog):
                 upsert=True,
             )
             try:
-                os.remove("data/leveler/temp/{}_rank.png".format(str(user.id)))
+                os.remove("temp/{}_rank.png".format(str(user.id)))
             except:
                 pass
 
@@ -782,10 +789,10 @@ class Leveler(commands.Cog):
 
         async with self.session.get(url) as r:
             image = await r.content.read()
-        with open("data/leveler/temp_auto.png", "wb") as f:
+        with open("temp_auto.png", "wb") as f:
             f.write(image)
 
-        im = Image.open("data/leveler/temp_auto.png").convert("RGBA")
+        im = Image.open("temp_auto.png").convert("RGBA")
         im = im.resize((290, 290))  # resized to reduce time
         ar = scipy.misc.fromimage(im)
         shape = ar.shape
@@ -1052,7 +1059,7 @@ class Leveler(commands.Cog):
         self.settings["msg_credits"][str(guild.id)] = credits
         await ctx.send("**Credits per message logged set to `{}`.**".format(str(credits)))
 
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     @lvladmin.command(name="lock", pass_context=True, no_pm=True)
     async def lvlmsglock(self, ctx):
@@ -1074,7 +1081,7 @@ class Leveler(commands.Cog):
             self.settings["lvl_msg_lock"][str(guild.id)] = channel.id
             await ctx.send("**Level-up messages locked to `#{}`**".format(channel.name))
 
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     async def _process_purchase(self, ctx):
         user = ctx.message.author
@@ -1141,7 +1148,7 @@ class Leveler(commands.Cog):
         else:
             self.settings["bg_price"] = price
             await ctx.send("**Background price set to: `{}`!**".format(price))
-            fileIO("data/leveler/settings.json", "save", self.settings)
+            fileIO("settings.json", "save", self.settings)
 
     @checks.is_owner()
     @lvladmin.command(pass_context=True, no_pm=True)
@@ -1200,7 +1207,7 @@ class Leveler(commands.Cog):
         else:
             self.settings["mention"] = True
             await ctx.send("**Mentions enabled.**")
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     async def _valid_image_url(self, url):
         max_byte = 1000
@@ -1208,10 +1215,10 @@ class Leveler(commands.Cog):
         try:
             async with self.session.get(url) as r:
                 image = await r.content.read()
-            with open("data/leveler/test.png", "wb") as f:
+            with open("test.png", "wb") as f:
                 f.write(image)
-            image = Image.open("data/leveler/test.png").convert("RGBA")
-            os.remove("data/leveler/test.png")
+            image = Image.open("test.png").convert("RGBA")
+            os.remove("test.png")
             return True
         except:
             return False
@@ -1229,7 +1236,7 @@ class Leveler(commands.Cog):
         else:
             self.settings["disabled_guilds"].append(str(guild.id))
             await ctx.send("**Leveler disabled on `{}`.**".format(guild.name))
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     @checks.admin_or_permissions(manage_guild=True)
     @lvladmin.command(pass_context=True, no_pm=True)
@@ -1261,7 +1268,7 @@ class Leveler(commands.Cog):
             else:
                 self.settings["text_only"].append(str(guild.id))
                 await ctx.send("**Text-only messages enabled for `{}`.**".format(guild.name))
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     @checks.admin_or_permissions(manage_guild=True)
     @lvladmin.command(name="alerts", pass_context=True, no_pm=True)
@@ -1293,7 +1300,7 @@ class Leveler(commands.Cog):
             else:
                 self.settings["lvl_msg"].append(str(guild.id))
                 await ctx.send("**Level-up alerts enabled for `{}`.**".format(guild.name))
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     @checks.admin_or_permissions(manage_guild=True)
     @lvladmin.command(name="private", pass_context=True, no_pm=True)
@@ -1325,7 +1332,7 @@ class Leveler(commands.Cog):
                 self.settings["private_lvl_msg"].append(str(guild.id))
                 await ctx.send("**Private level-up alerts enabled for `{}`.**".format(guild.name))
 
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     @commands.group(pass_context=True)
     async def badge(self, ctx):
@@ -1664,7 +1671,7 @@ class Leveler(commands.Cog):
 
         self.settings["badge_type"] = name.lower()
         await ctx.send("**Badge type set to `{}`**".format(name.lower()))
-        fileIO("data/leveler/settings.json", "save", self.settings)
+        fileIO("settings.json", "save", self.settings)
 
     def _is_hex(self, color: str):
         if color != None and len(color) != 4 and len(color) != 7:
@@ -1992,7 +1999,7 @@ class Leveler(commands.Cog):
             await ctx.send("**That is not a valid image url!**")
         else:
             self.backgrounds["profile"][name] = url
-            fileIO("data/leveler/backgrounds.json", "save", self.backgrounds)
+            fileIO("backgrounds.json", "save", self.backgrounds)
             await ctx.send("**New profile background(`{}`) added.**".format(name))
 
     @checks.is_owner()
@@ -2005,7 +2012,7 @@ class Leveler(commands.Cog):
             await ctx.send("**That is not a valid image url!**")
         else:
             self.backgrounds["rank"][name] = url
-            fileIO("data/leveler/backgrounds.json", "save", self.backgrounds)
+            fileIO("backgrounds.json", "save", self.backgrounds)
             await ctx.send("**New rank background(`{}`) added.**".format(name))
 
     @checks.is_owner()
@@ -2018,7 +2025,7 @@ class Leveler(commands.Cog):
             await ctx.send("**That is not a valid image url!**")
         else:
             self.backgrounds["levelup"][name] = url
-            fileIO("data/leveler/backgrounds.json", "save", self.backgrounds)
+            fileIO("backgrounds.json", "save", self.backgrounds)
             await ctx.send("**New level-up background(`{}`) added.**".format(name))
 
     @checks.is_owner()
@@ -2053,7 +2060,7 @@ class Leveler(commands.Cog):
         """Delete a profile background."""
         if name in self.backgrounds["profile"].keys():
             del self.backgrounds["profile"][name]
-            fileIO("data/leveler/backgrounds.json", "save", self.backgrounds)
+            fileIO("backgrounds.json", "save", self.backgrounds)
             await ctx.send("**The profile background(`{}`) has been deleted.**".format(name))
         else:
             await ctx.send("**That profile background name doesn't exist.**")
@@ -2064,7 +2071,7 @@ class Leveler(commands.Cog):
         """Delete a rank background."""
         if name in self.backgrounds["rank"].keys():
             del self.backgrounds["rank"][name]
-            fileIO("data/leveler/backgrounds.json", "save", self.backgrounds)
+            fileIO("backgrounds.json", "save", self.backgrounds)
             await ctx.send("**The rank background(`{}`) has been deleted.**".format(name))
         else:
             await ctx.send("**That rank background name doesn't exist.**")
@@ -2075,7 +2082,7 @@ class Leveler(commands.Cog):
         """Delete a level background."""
         if name in self.backgrounds["levelup"].keys():
             del self.backgrounds["levelup"][name]
-            fileIO("data/leveler/backgrounds.json", "save", self.backgrounds)
+            fileIO("backgrounds.json", "save", self.backgrounds)
             await ctx.send("**The level-up background(`{}`) has been deleted.**".format(name))
         else:
             await ctx.send("**That level-up background name doesn't exist.**")
@@ -2158,10 +2165,10 @@ class Leveler(commands.Cog):
                 await ctx.send("**Invalid Background Type. (profile, rank, levelup)**")
 
     async def draw_profile(self, user, guild):
-        font_thin_file = "data/leveler/fonts/Uni_Sans_Thin.ttf"
-        font_heavy_file = "data/leveler/fonts/Uni_Sans_Heavy.ttf"
-        font_file = "data/leveler/fonts/SourceSansPro-Regular.ttf"
-        font_bold_file = "data/leveler/fonts/SourceSansPro-Semibold.ttf"
+        font_thin_file = "fonts/Uni_Sans_Thin.ttf"
+        font_heavy_file = "fonts/Uni_Sans_Heavy.ttf"
+        font_file = "fonts/SourceSansPro-Regular.ttf"
+        font_bold_file = "fonts/SourceSansPro-Semibold.ttf"
 
         name_fnt = ImageFont.truetype(font_heavy_file, 30)
         name_u_fnt = ImageFont.truetype(font_unicode_file, 30)
@@ -2228,7 +2235,7 @@ class Leveler(commands.Cog):
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open("data/leveler/temp/{}_temp_profile_bg.png".format(str(user.id)), "wb") as f:
+        with open("temp/{}_temp_profile_bg.png".format(str(user.id)), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -2236,14 +2243,14 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("data/leveler/temp/{}_temp_profile_profile.png".format(str(user.id)), "wb") as f:
+        with open("temp/{}_temp_profile_profile.png".format(str(user.id)), "wb") as f:
             f.write(image)
 
         bg_image = Image.open(
-            "data/leveler/temp/{}_temp_profile_bg.png".format(str(user.id))
+            "temp/{}_temp_profile_bg.png".format(str(user.id))
         ).convert("RGBA")
         profile_image = Image.open(
-            "data/leveler/temp/{}_temp_profile_profile.png".format(str(user.id))
+            "temp/{}_temp_profile_profile.png".format(str(user.id))
         ).convert("RGBA")
 
         # set canvas
@@ -2480,11 +2487,11 @@ class Leveler(commands.Cog):
                         async with self.session.get(bg_color) as r:
                             image = await r.content.read()
                         with open(
-                            "data/leveler/temp/{}_temp_badge.png".format(str(user.id)), "wb"
+                            "temp/{}_temp_badge.png".format(str(user.id)), "wb"
                         ) as f:
                             f.write(image)
                         badge_image = Image.open(
-                            "data/leveler/temp/{}_temp_badge.png".format(str(user.id))
+                            "temp/{}_temp_badge.png".format(str(user.id))
                         ).convert("RGBA")
                         badge_image = badge_image.resize((raw_length, raw_length), Image.ANTIALIAS)
 
@@ -2560,21 +2567,21 @@ class Leveler(commands.Cog):
 
                 # attempt to remove badge image
                 try:
-                    os.remove("data/leveler/temp/{}_temp_badge.png".format(str(user.id)))
+                    os.remove("temp/{}_temp_badge.png".format(str(user.id)))
                 except:
                     pass
 
         result = Image.alpha_composite(result, process)
         result = self._add_corners(result, 25)
-        result.save("data/leveler/temp/{}_profile.png".format(str(user.id)), "PNG", quality=100)
+        result.save("temp/{}_profile.png".format(str(user.id)), "PNG", quality=100)
 
         # remove images
         try:
-            os.remove("data/leveler/temp/{}_temp_profile_bg.png".format(str(user.id)))
+            os.remove("temp/{}_temp_profile_bg.png".format(str(user.id)))
         except:
             pass
         try:
-            os.remove("data/leveler/temp/{}_temp_profile_profile.png".format(str(user.id)))
+            os.remove("temp/{}_temp_profile_profile.png".format(str(user.id)))
         except:
             pass
 
@@ -2673,7 +2680,7 @@ class Leveler(commands.Cog):
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open('data/leveler/temp/{}_temp_rank_bg.png'.format(str(user.id)),'wb') as f:
+        with open('temp/{}_temp_rank_bg.png'.format(str(user.id)),'wb') as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -2681,7 +2688,7 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open('data/leveler/temp/{}_temp_rank_profile.png'.format(str(user.id)),'wb') as f:
+        with open('temp/{}_temp_rank_profile.png'.format(str(user.id)),'wb') as f:
             f.write(image)
         try:
             async with self.session.get(guild_icon_url) as r:
@@ -2689,12 +2696,12 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open('data/leveler/temp/{}_temp_guild_icon.png'.format(str(user.id)),'wb') as f:
+        with open('temp/{}_temp_guild_icon.png'.format(str(user.id)),'wb') as f:
             f.write(image)
 
-        bg_image = Image.open('data/leveler/temp/{}_temp_rank_bg.png'.format(str(user.id))).convert('RGBA')
-        profile_image = Image.open('data/leveler/temp/{}_temp_rank_profile.png'.format(str(user.id))).convert('RGBA')
-        guild_image = Image.open('data/leveler/temp/{}_temp_guild_icon.png'.format(str(user.id))).convert('RGBA')
+        bg_image = Image.open('temp/{}_temp_rank_bg.png'.format(str(user.id))).convert('RGBA')
+        profile_image = Image.open('temp/{}_temp_rank_profile.png'.format(str(user.id))).convert('RGBA')
+        guild_image = Image.open('temp/{}_temp_guild_icon.png'.format(str(user.id))).convert('RGBA')
 
         # set canvas
         width = 360
@@ -2840,15 +2847,15 @@ class Leveler(commands.Cog):
 
         result = Image.alpha_composite(result, process)
         result = await self._add_dropshadow(result)
-        result.save('data/leveler/temp/{}_rank.png'.format(str(user.id)),'PNG', quality=100)
+        result.save('temp/{}_rank.png'.format(str(user.id)),'PNG', quality=100)
     """
 
     async def draw_rank(self, user, guild):
         # fonts
-        font_thin_file = "data/leveler/fonts/Uni_Sans_Thin.ttf"
-        font_heavy_file = "data/leveler/fonts/Uni_Sans_Heavy.ttf"
-        font_file = "data/leveler/fonts/SourceSansPro-Regular.ttf"
-        font_bold_file = "data/leveler/fonts/SourceSansPro-Semibold.ttf"
+        font_thin_file = "fonts/Uni_Sans_Thin.ttf"
+        font_heavy_file = "fonts/Uni_Sans_Heavy.ttf"
+        font_file = "fonts/SourceSansPro-Regular.ttf"
+        font_bold_file = "fonts/SourceSansPro-Semibold.ttf"
 
         name_fnt = ImageFont.truetype(font_heavy_file, 24)
         name_u_fnt = ImageFont.truetype(font_unicode_file, 24)
@@ -2881,7 +2888,7 @@ class Leveler(commands.Cog):
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open("data/leveler/temp/test_temp_rank_bg.png".format(str(user.id)), "wb") as f:
+        with open("temp/test_temp_rank_bg.png".format(str(user.id)), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -2889,7 +2896,7 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("data/leveler/temp/test_temp_rank_profile.png".format(str(user.id)), "wb") as f:
+        with open("temp/test_temp_rank_profile.png".format(str(user.id)), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(guild_icon_url) as r:
@@ -2897,17 +2904,17 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("data/leveler/temp/test_temp_guild_icon.png".format(str(user.id)), "wb") as f:
+        with open("temp/test_temp_guild_icon.png".format(str(user.id)), "wb") as f:
             f.write(image)
 
         bg_image = Image.open(
-            "data/leveler/temp/test_temp_rank_bg.png".format(str(user.id))
+            "temp/test_temp_rank_bg.png".format(str(user.id))
         ).convert("RGBA")
         profile_image = Image.open(
-            "data/leveler/temp/test_temp_rank_profile.png".format(str(user.id))
+            "temp/test_temp_rank_profile.png".format(str(user.id))
         ).convert("RGBA")
         guild_image = Image.open(
-            "data/leveler/temp/test_temp_guild_icon.png".format(str(user.id))
+            "temp/test_temp_guild_icon.png".format(str(user.id))
         ).convert("RGBA")
 
         # set canvas
@@ -3073,7 +3080,7 @@ class Leveler(commands.Cog):
         )  # Rank
 
         result = Image.alpha_composite(result, process)
-        result.save("data/leveler/temp/{}_rank.png".format(str(user.id)), "PNG", quality=100)
+        result.save("temp/{}_rank.png".format(str(user.id)), "PNG", quality=100)
 
     def _add_corners(self, im, rad, multiplier=6):
         raw_length = rad * 2 * multiplier
@@ -3104,7 +3111,7 @@ class Leveler(commands.Cog):
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open('data/leveler/temp/{}_temp_level_bg.png'.format(str(user.id)),'wb') as f:
+        with open('temp/{}_temp_level_bg.png'.format(str(user.id)),'wb') as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -3112,11 +3119,11 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open('data/leveler/temp/{}_temp_level_profile.png'.format(str(user.id)),'wb') as f:
+        with open('temp/{}_temp_level_profile.png'.format(str(user.id)),'wb') as f:
             f.write(image)
 
-        bg_image = Image.open('data/leveler/temp/{}_temp_level_bg.png'.format(str(user.id))).convert('RGBA')
-        profile_image = Image.open('data/leveler/temp/{}_temp_level_profile.png'.format(str(user.id))).convert('RGBA')
+        bg_image = Image.open('temp/{}_temp_level_bg.png'.format(str(user.id))).convert('RGBA')
+        profile_image = Image.open('temp/{}_temp_level_profile.png'.format(str(user.id))).convert('RGBA')
 
         # set canvas
         width = 175
@@ -3178,8 +3185,8 @@ class Leveler(commands.Cog):
         process.paste(profile_image, (circle_left + border, circle_top + border), mask)
 
         # fonts
-        level_fnt2 = ImageFont.truetype('data/leveler/fonts/font_bold.ttf', 19)
-        level_fnt = ImageFont.truetype('data/leveler/fonts/font_bold.ttf', 26)
+        level_fnt2 = ImageFont.truetype('fonts/font_bold.ttf', 19)
+        level_fnt = ImageFont.truetype('fonts/font_bold.ttf', 26)
 
         # write label text
         white_text = (240,240,240,255)
@@ -3190,12 +3197,12 @@ class Leveler(commands.Cog):
 
         result = Image.alpha_composite(result, process)
         result = await self._add_dropshadow(result)
-        filename = 'data/leveler/temp/{}_level.png'.format(str(user.id))
+        filename = 'temp/{}_level.png'.format(str(user.id))
         result.save(filename,'PNG', quality=100)"""
 
     async def draw_levelup(self, user, guild):
         # fonts
-        font_thin_file = "data/leveler/fonts/Uni_Sans_Thin.ttf"
+        font_thin_file = "fonts/Uni_Sans_Thin.ttf"
         level_fnt = ImageFont.truetype(font_thin_file, 23)
 
         userinfo = db.users.find_one({"user_id": str(str(user.id))})
@@ -3210,7 +3217,7 @@ class Leveler(commands.Cog):
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open("data/leveler/temp/{}_temp_level_bg.png".format(str(user.id)), "wb") as f:
+        with open("temp/{}_temp_level_bg.png".format(str(user.id)), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -3218,14 +3225,14 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("data/leveler/temp/{}_temp_level_profile.png".format(str(user.id)), "wb") as f:
+        with open("temp/{}_temp_level_profile.png".format(str(user.id)), "wb") as f:
             f.write(image)
 
         bg_image = Image.open(
-            "data/leveler/temp/{}_temp_level_bg.png".format(str(user.id))
+            "temp/{}_temp_level_bg.png".format(str(user.id))
         ).convert("RGBA")
         profile_image = Image.open(
-            "data/leveler/temp/{}_temp_level_profile.png".format(str(user.id))
+            "temp/{}_temp_level_profile.png".format(str(user.id))
         ).convert("RGBA")
 
         # set canvas
@@ -3308,7 +3315,7 @@ class Leveler(commands.Cog):
 
         result = Image.alpha_composite(result, process)
         result = self._add_corners(result, int(height / 2))
-        filename = "data/leveler/temp/{}_level.png".format(str(user.id))
+        filename = "temp/{}_level.png".format(str(user.id))
         result.save(filename, "PNG", quality=100)
 
     async def _handle_on_message(self, message):
@@ -3390,7 +3397,7 @@ class Leveler(commands.Cog):
     async def _handle_levelup(self, user, userinfo, guild, channel):
         if not isinstance(self.settings["lvl_msg"], list):
             self.settings["lvl_msg"] = []
-            fileIO("data/leveler/settings.json", "save", self.settings)
+            fileIO("settings.json", "save", self.settings)
         guild_identifier = ""  # super hacky
         name = self._is_mention(user)  # also super hacky
         new_level = str(userinfo["servers"][str(guild.id)]["level"])
@@ -3426,7 +3433,7 @@ class Leveler(commands.Cog):
 
                 await channel.send(
                     "**{} just gained a level{}!**".format(name, guild_identifier),
-                    file=discord.File("data/leveler/temp/{}_level.png".format(str(user.id))),
+                    file=discord.File("temp/{}_level.png".format(str(user.id))),
                 )
 
         # add to appropriate role if necessary
@@ -3651,18 +3658,18 @@ def check_folders():
         print("Creating data/leveler folder...")
         os.makedirs("data/leveler")
 
-    if not os.path.exists("data/leveler/temp"):
-        print("Creating data/leveler/temp folder...")
-        os.makedirs("data/leveler/temp")
+    if not os.path.exists("temp"):
+        print("Creating temp folder...")
+        os.makedirs("temp")
 
 
 def transfer_info():
     try:
-        users = fileIO("data/leveler/users.json", "load")
+        users = fileIO("users.json", "load")
         for user_id in users:
-            os.makedirs("data/leveler/users/{}".format(user_id))
+            os.makedirs("users/{}".format(user_id))
             # create info.json
-            f = "data/leveler/users/{}/info.json".format(user_id)
+            f = "users/{}/info.json".format(user_id)
             if not fileIO(f, "check"):
                 fileIO(f, "save", users[user_id])
     except:
@@ -3682,7 +3689,7 @@ def check_files():
         "chat_cooldown": 120,
     }
 
-    settings_path = "data/leveler/settings.json"
+    settings_path = "settings.json"
     if not os.path.isfile(settings_path):
         print("Creating default leveler settings.json...")
         fileIO(settings_path, "save", default)
@@ -3713,12 +3720,12 @@ def check_files():
         "levelup": {"default": "http://i.imgur.com/eEFfKqa.jpg"},
     }
 
-    bgs_path = "data/leveler/backgrounds.json"
+    bgs_path = "backgrounds.json"
     if not os.path.isfile(bgs_path):
         print("Creating default leveler backgrounds.json...")
         fileIO(bgs_path, "save", bgs)
 
-    f = "data/leveler/badges.json"
+    f = "badges.json"
     if not fileIO(f, "check"):
         print("Creating badges.json...")
         fileIO(f, "save", {})
