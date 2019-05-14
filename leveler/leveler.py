@@ -1629,7 +1629,7 @@ class Leveler(commands.Cog):
 
     @checks.is_owner()
     @badge.command(no_pm=True)
-    async def type(self, name: str):
+    async def type(self, ctx, name: str):
         """circles or bars."""
         valid_types = ["circles", "bars"]
         if name.lower() not in valid_types:
