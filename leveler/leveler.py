@@ -14,8 +14,12 @@ from redbot.core import checks, bank
 module_path = os.path.dirname(os.path.abspath(__file__))
 
 
+def munge_path(*paths):
+    return os.path.join(module_path, "data", *paths)
+
+
 def fileIO(path, *args):
-    return _fileIO(os.path.join(module_path, "data", path), *args)
+    return _fileIO(munge_path(path), *args)
 
 try:
     import pymongo
@@ -35,9 +39,9 @@ except:
 import time
 
 # fonts
-font_file = "fonts/font.ttf"
-font_bold_file = "fonts/font_bold.ttf"
-font_unicode_file = "fonts/unicode.ttf"
+font_file = munge_path("fonts", "font.ttf")
+font_bold_file = munge_path("fonts", "font_bold.ttf")
+font_unicode_file = munge_path("fonts", "unicode.ttf")
 
 # Credits (None)
 bg_credits = {}
@@ -111,13 +115,13 @@ class Leveler(commands.Cog):
 
             await channel.send(
                 "**User profile for {}**".format(self._is_mention(user)),
-                file=discord.File("temp/{}_profile.png".format(str(user.id))),
+                file=discord.File(munge_path("temp/{}_profile.png".format(str(user.id)))),
             )
             db.users.update_one(
                 {"user_id": str(str(user.id))}, {"$set": {"profile_block": curr_time}}, upsert=True
             )
             try:
-                os.remove("temp/{}_profile.png".format(str(user.id)))
+                os.remove(munge_path("temp/{}_profile.png".format(str(user.id))))
             except:
                 pass
 
@@ -2115,10 +2119,11 @@ class Leveler(commands.Cog):
                 await ctx.send("**Invalid Background Type. (profile, rank, levelup)**")
 
     async def draw_profile(self, user, guild):
-        font_thin_file = "fonts/Uni_Sans_Thin.ttf"
-        font_heavy_file = "fonts/Uni_Sans_Heavy.ttf"
-        font_file = "fonts/SourceSansPro-Regular.ttf"
-        font_bold_file = "fonts/SourceSansPro-Semibold.ttf"
+        font_thin_file = munge_path("fonts", "Uni_Sans_Thin.ttf")
+        font_heavy_file = munge_path("fonts", "Uni_Sans_Heavy.ttf")
+        font_file = munge_path("fonts", "SourceSansPro-Regular.ttf")
+        font_bold_file = munge_path("fonts", "SourceSansPro-Semibold.ttf")
+
 
         name_fnt = ImageFont.truetype(font_heavy_file, 30)
         name_u_fnt = ImageFont.truetype(font_unicode_file, 30)
@@ -2185,7 +2190,7 @@ class Leveler(commands.Cog):
 
         async with self.session.get(bg_url) as r:
             image = await r.content.read()
-        with open("temp/{}_temp_profile_bg.png".format(str(user.id)), "wb") as f:
+        with open(munge_path("temp/{}_temp_profile_bg.png".format(str(user.id))), "wb") as f:
             f.write(image)
         try:
             async with self.session.get(profile_url) as r:
@@ -2193,14 +2198,14 @@ class Leveler(commands.Cog):
         except:
             async with self.session.get(default_avatar_url) as r:
                 image = await r.content.read()
-        with open("temp/{}_temp_profile_profile.png".format(str(user.id)), "wb") as f:
+        with open(munge_path("temp/{}_temp_profile_profile.png".format(str(user.id))), "wb") as f:
             f.write(image)
 
         bg_image = Image.open(
-            "temp/{}_temp_profile_bg.png".format(str(user.id))
+            munge_path("temp/{}_temp_profile_bg.png".format(str(user.id)))
         ).convert("RGBA")
         profile_image = Image.open(
-            "temp/{}_temp_profile_profile.png".format(str(user.id))
+            munge_path("temp/{}_temp_profile_profile.png".format(str(user.id)))
         ).convert("RGBA")
 
         # set canvas
@@ -2523,15 +2528,15 @@ class Leveler(commands.Cog):
 
         result = Image.alpha_composite(result, process)
         result = self._add_corners(result, 25)
-        result.save("temp/{}_profile.png".format(str(user.id)), "PNG", quality=100)
+        result.save(munge_path("temp/{}_profile.png".format(str(user.id))), "PNG", quality=100)
 
         # remove images
         try:
-            os.remove("temp/{}_temp_profile_bg.png".format(str(user.id)))
+            os.remove(munge_path("temp/{}_temp_profile_bg.png".format(str(user.id))))
         except:
             pass
         try:
-            os.remove("temp/{}_temp_profile_profile.png".format(str(user.id)))
+            os.remove(munge_path("temp/{}_temp_profile_profile.png".format(str(user.id))))
         except:
             pass
 
