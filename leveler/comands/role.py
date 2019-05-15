@@ -12,7 +12,7 @@ from ..permissions import leveler_enabled
 @commands.group(pass_context=True)
 @leveler_enabled
 async def role(ctx):
-    """Admin Background Configuration"""
+    """Admin Role Configuration"""
     if ctx.invoked_subcommand is None:
         return
 
