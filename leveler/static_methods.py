@@ -6,7 +6,16 @@ from PIL import Image, ImageDraw
 import operator
 import re
 
+from .config import db
+
 user_directory = "users"
+
+
+async def get_user_name(user):
+    if await db.mention():
+        return user.mention
+    else:
+        return user.name
 
 
 def pop_database():

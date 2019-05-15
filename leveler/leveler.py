@@ -50,13 +50,6 @@ class Leveler(commands.Cog):
         if "leveler" not in dbs:
             pop_database()
 
-    # should the user be mentioned based on settings?
-    def _is_mention(self, user):
-        if "mention" not in self.settings.keys() or self.settings["mention"]:
-            return user.mention
-        else:
-            return user.name
-
     # uses k-means algorithm to find color from bg, rank is abundance of color, descending
     async def _auto_color(self, ctx, url: str, ranks):
         phrases = ["Calculating colors..."]  # in case I want more

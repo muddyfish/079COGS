@@ -1,7 +1,7 @@
 from redbot.core import Config
 
 
-db = Config.get_conf(None, 228174739, force_registration=True)
+db = Config.get_conf(None, 228174739, force_registration=True, cog_name="leveler")
 
 
 backgrounds = {
@@ -49,11 +49,10 @@ settings = {
 
 global_settings = {
     "backgrounds": backgrounds,
-    "settings": settings,
+    **settings,
 }
 
 default_user = {
-    "servers": {},
     "total_exp": 0,
     "profile_background": backgrounds["profile"]["default"],
     "rank_background": backgrounds["rank"]["default"],
