@@ -33,9 +33,10 @@ async def role_link(ctx, role_name: str, level: int, remove_role: Optional[str] 
 
     role_info = db.role(role_obj)
     await role_info.level.set(level)
-    await role_info.remove_role.set(remove_role_obj.id)
+    if remove_role_obj is not None:
+        await role_info.remove_role.set(remove_role_obj.id)
 
-    remove_role_msg = f"Will also remove `{remove_role}` role." if remove_role is None else ""
+    remove_role_msg = f"Will also remove `{remove_role}` role." if remove_role is not None else ""
     message = f"**The `{role_name}` role has been linked to level `{level}`. {remove_role_msg}**"
     await ctx.send(message)
 
@@ -68,25 +69,27 @@ async def role_list(ctx):
     guild = ctx.message.guild
     user = ctx.message.author
 
-    guild_roles = db.roles.find_one({"guild_id": str(guild.id)})
-
-    em = Embed(description="", colour=user.colour)
-    em.set_author(
-        name="Current Role - Level Links for {}".format(guild.name), icon_url=guild.icon_url
+    embed = Embed(description="", colour=user.colour)
+    embed.set_author(
+        name=f"Current Role - Level Links for {guild.name}",
+        icon_url=guild.icon_url
     )
 
-    if guild_roles == None or "roles" not in guild_roles or guild_roles["roles"] == {}:
-        msg = "None"
-    else:
-        roles = guild_roles["roles"]
-        msg = "**Role** → Level\n"
-        for role in roles:
-            if roles[role]["remove_role"] != None:
-                msg += "**• {} →** {} (Removes: {})\n".format(
-                    role, roles[role]["level"], roles[role]["remove_role"]
-                )
+    role_text = []
+    for role in guild.roles:
+        role_info = db.role(role)
+        role_level = await role_info.level()
+        remove_role_id = await role_info.remove_role()
+        if role_level is not None:
+            if remove_role_id is not None:
+                role_name = next(r.name for r in guild.roles if r.id == remove_role_id) or "Deleted Role"
+                role_text.append(f"**• {role} →** {role_level} (Removes: {role_name})\n")
             else:
-                msg += "**• {} →** {}\n".format(role, roles[role]["level"])
+                role_text.append(f"**• {role} →** {role_level}\n")
 
-    em.description = msg
-    await ctx.send(embed=em)
+    if not role_text:
+        embed.description = "None"
+    else:
+        embed.description = "**Role** → Level\n" + "".join(role_text)
+
+    await ctx.send(embed=embed)
