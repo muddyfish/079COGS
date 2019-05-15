@@ -67,7 +67,6 @@ default_user = {
     "rep_block": 0,
     "chat_block": 0,
     "profile_block": 0,
-    "rank_block": 0,
 }
 
 default_role = {
@@ -75,6 +74,13 @@ default_role = {
     "remove_role": None
 }
 
+default_member = {
+    "level": 0,
+    "current_exp": 0,
+    "rank_info_color": (140, 140, 140, 230)
+}
+
 db.register_global(**global_settings)
 db.register_user(**default_user)
+db.register_member(**default_member)
 db.register_role(**default_role)

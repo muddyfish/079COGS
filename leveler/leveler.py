@@ -89,16 +89,6 @@ class Leveler(commands.Cog):
             colors.append("".join(format(c, "02x") for c in peak))
         return colors  # returns array
 
-    # returns a string with possibly a nickname
-    def _name(self, user, max_length):
-        if user.name == user.display_name:
-            return user.name
-        else:
-            return "{} ({})".format(
-                user.name,
-                _truncate_text(user.display_name, max_length - len(user.name) - 3),
-                max_length,
-            )
 
     # handles user creation, adding new guild, blocking
     async def _create_user(self, user, guild):
@@ -123,7 +113,6 @@ class Leveler(commands.Cog):
                     "rep_block": 0,
                     "chat_block": 0,
                     "profile_block": 0,
-                    "rank_block": 0,
                 }
                 db.users.insert_one(new_account)
 

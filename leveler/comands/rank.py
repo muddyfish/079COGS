@@ -1,74 +1,48 @@
 from redbot.core import commands, bank
-import discord
 import time
 import os
 from PIL import ImageFont, Image, ImageDraw
 import string
 import platform
-from ..leveler import munge_path, db, default_avatar_url, font_unicode_file
-from ..static_methods import _find_guild_rank, _find_guild_exp, _add_corners, _required_exp, _truncate_text, _center
+
+from typing import NoReturn
+
+from discord import Member, File, Guild
+
+from ..leveler import munge_path, default_avatar_url, font_unicode_file
+from ..static_methods import _find_guild_rank, _add_corners, _required_exp, _truncate_text, _center, get_user_name, get_user_display_name
+
+
+from io import BytesIO
+from aiohttp import ClientSession
+
+from ..config import db
+from ..permissions import leveler_enabled
+from ..path_munger import font_heavy_file, font_bold_file, font_thin_file
 
 
 @commands.cooldown(1, 10, commands.BucketType.user)
 @commands.command(pass_context=True, no_pm=True)
-async def rank(leveler, ctx, user: discord.Member = None):
+@leveler_enabled
+async def rank(ctx, user: Member = None):
     """Displays the rank of a user."""
     if user is None:
         user = ctx.message.author
-    channel = ctx.message.channel
-    guild = user.guild
-    curr_time = time.time()
 
-    # creates user if doesn't exist
-    await leveler._create_user(user, guild)
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
+    async with ClientSession(loop=ctx.bot.loop) as session:
+        image = await draw_rank(session, user)
 
-    # check if disabled
-    if str(guild.id) in leveler.settings["disabled_guilds"]:
-        await ctx.send("**Leveler commands for this guild are disabled!**")
-        return
+    image_buffer = BytesIO()
+    image.save(image_buffer, "png")
+    image_buffer.seek(0)
 
-    # no cooldown for text only
-    if "text_only" in leveler.settings and str(guild.id) in leveler.settings["text_only"]:
-        em = await rank_text(user, guild, userinfo)
-        await channel.send("", embed=em)
-    else:
-        await draw_rank(leveler, user, guild)
-
-        await channel.send(
-            "**Ranking & Statistics for {}**".format(leveler._is_mention(user)),
-            file=discord.File(munge_path("temp/{}_rank.png".format(str(user.id)))),
-        )
-        db.users.update_one(
-            {"user_id": str(str(user.id))},
-            {"$set": {"rank_block".format(str(guild.id)): curr_time}},
-            upsert=True,
-        )
-        try:
-            os.remove("temp/{}_rank.png".format(str(user.id)))
-        except:
-            pass
-
-
-async def rank_text(user, guild, userinfo):
-    em = discord.Embed(description="", colour=user.colour)
-    em.add_field(
-        name="guild Rank", value="#{}".format(await _find_guild_rank(user, guild))
+    await ctx.send(
+        f"**Ranking & Statistics for {await get_user_name(user)}**",
+        file=File(filename="rank.png", fp=image_buffer),
     )
-    em.add_field(name="Reps", value=userinfo["rep"])
-    em.add_field(name="guild Level", value=userinfo["servers"][str(guild.id)]["level"])
-    em.add_field(name="guild Exp", value=await _find_guild_exp(user, guild))
-    em.set_author(name="Rank and Statistics for {}".format(user.name), url=user.avatar_url)
-    em.set_thumbnail(url=user.avatar_url)
-    return em
 
 
-async def draw_rank(self, user, guild):
-    # fonts
-    font_thin_file = munge_path("fonts/Uni_Sans_Thin.ttf")
-    font_heavy_file = munge_path("fonts/Uni_Sans_Heavy.ttf")
-    font_bold_file = munge_path("fonts/SourceSansPro-Semibold.ttf")
-
+async def draw_rank(session: ClientSession, user: Member) -> Image:
     name_fnt = ImageFont.truetype(font_heavy_file, 24)
     name_u_fnt = ImageFont.truetype(font_unicode_file, 24)
     label_fnt = ImageFont.truetype(font_bold_file, 16)
@@ -87,41 +61,20 @@ async def draw_rank(self, user, guild):
                 draw.text((write_pos, y), u"{}".format(char), font=unicode_font, fill=fill)
                 write_pos += unicode_font.getsize(char)[0]
 
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
-    # get urls
-    bg_url = userinfo["rank_background"]
+    user_info = db.user(user)
+
+    bg_url = await user_info.rank_background()
     profile_url = user.avatar_url
-    guild_icon_url = guild.icon_url
 
-    # create image objects
+    async with session.get(bg_url) as r:
+        bg_image = Image.open(BytesIO(await r.content.read())).convert("RGBA")
+    async with session.get(profile_url) as r:
+        profile_image = Image.open(BytesIO(await r.content.read())).convert("RGBA")
 
-    async with self.session.get(bg_url) as r:
-        image = await r.content.read()
-    with open(munge_path("temp/test_temp_rank_bg.png".format(str(user.id))), "wb") as f:
-        f.write(image)
-    try:
-        async with self.session.get(profile_url) as r:
-            image = await r.content.read()
-    except:
-        async with self.session.get(default_avatar_url) as r:
-            image = await r.content.read()
-    with open(munge_path("temp/test_temp_rank_profile.png".format(str(user.id))), "wb") as f:
-        f.write(image)
-    try:
-        async with self.session.get(guild_icon_url) as r:
-            image = await r.content.read()
-    except:
-        async with self.session.get(default_avatar_url) as r:
-            image = await r.content.read()
-    with open(munge_path("temp/test_temp_guild_icon.png".format(str(user.id))), "wb") as f:
-        f.write(image)
-
-    bg_image = Image.open(
-        munge_path("temp/test_temp_rank_bg.png".format(str(user.id)))
-    ).convert("RGBA")
-    profile_image = Image.open(
-        munge_path("temp/test_temp_rank_profile.png".format(str(user.id)))
-    ).convert("RGBA")
+    member_info = db.member(user)
+    user_exp = await member_info.current_exp()
+    user_level = await member_info.level()
+    exp_color = await member_info.rank_info_color()
 
     # set canvas
     width = 390
@@ -144,14 +97,8 @@ async def draw_rank(self, user, guild):
     draw_overlay = ImageDraw.Draw(info_section_process)
     draw_overlay.rectangle([(0, 0), (bg_width, 20)], fill=(230, 230, 230, 200))
     draw_overlay.rectangle([(0, 20), (bg_width, 30)], fill=(120, 120, 120, 180))  # Level bar
-    exp_frac = int(userinfo["servers"][str(guild.id)]["current_exp"])
-    exp_total = _required_exp(userinfo["servers"][str(guild.id)]["level"])
-    exp_width = int(bg_width * (exp_frac / exp_total))
-    if "rank_info_color" in userinfo.keys():
-        exp_color = tuple(userinfo["rank_info_color"])
-        exp_color = (exp_color[0], exp_color[1], exp_color[2], 180)  # increase transparency
-    else:
-        exp_color = (140, 140, 140, 230)
+    exp_width = int(bg_width * (user_exp / _required_exp(user_level)))
+
     draw_overlay.rectangle([(0, 20), (exp_width, 30)], fill=exp_color)  # Exp bar
     draw_overlay.rectangle([(0, 30), (bg_width, 31)], fill=(0, 0, 0, 255))  # Divider
     for i in range(0, 70):
@@ -201,7 +148,7 @@ async def draw_rank(self, user, guild):
 
     # name
     _write_unicode(
-        _truncate_text(self._name(user, 20), 20), 100, 0, name_fnt, name_u_fnt, grey_color
+        _truncate_text(get_user_display_name(user, 20), 20), 100, 0, name_fnt, name_u_fnt, grey_color
     )  # Name
 
     # labels
@@ -227,24 +174,22 @@ async def draw_rank(self, user, guild):
     )  # Rank
     if "linux" in platform.system().lower():
         local_symbol = u"\U0001F3E0 "
-    else:
-        local_symbol = "S. "
-    _write_unicode(
-        local_symbol, 117, v_label_align + 4, label_fnt, symbol_u_fnt, info_text_color
-    )  # Symbol
-    _write_unicode(
-        local_symbol, 195, v_label_align + 4, label_fnt, symbol_u_fnt, info_text_color
-    )  # Symbol
+        _write_unicode(
+            local_symbol, 117, v_label_align + 4, label_fnt, symbol_u_fnt, info_text_color
+        )  # Symbol
+        _write_unicode(
+            local_symbol, 195, v_label_align + 4, label_fnt, symbol_u_fnt, info_text_color
+        )  # Symbol
 
     # userinfo
-    guild_rank = "#{}".format(await _find_guild_rank(user, guild))
+    guild_rank = "#{}".format(await _find_guild_rank(user))
     draw.text(
         (_center(100, 200, guild_rank, large_fnt), v_label_align - 30),
         guild_rank,
         font=large_fnt,
         fill=info_text_color,
     )  # Rank
-    level_text = "{}".format(userinfo["servers"][str(guild.id)]["level"])
+    level_text = str(user_level)
     draw.text(
         (_center(95, 360, level_text, large_fnt), v_label_align - 30),
         level_text,
@@ -255,14 +200,14 @@ async def draw_rank(self, user, guild):
         credits = await bank.get_balance(user)
     except:
         credits = 0
-    credit_txt = "${}".format(credits)
+    credit_txt = f"${credits}"
     draw.text(
         (_center(260, 360, credit_txt, large_fnt), v_label_align - 30),
         credit_txt,
         font=large_fnt,
         fill=info_text_color,
     )  # Balance
-    exp_text = "{}/{}".format(exp_frac, exp_total)
+    exp_text = f"{user_exp}/{_required_exp(user_level)}"
     draw.text(
         (_center(80, 360, exp_text, exp_fnt), 19),
         exp_text,
@@ -270,5 +215,4 @@ async def draw_rank(self, user, guild):
         fill=info_text_color,
     )  # Rank
 
-    result = Image.alpha_composite(result, process)
-    result.save(munge_path("temp/{}_rank.png".format(str(user.id))), "PNG", quality=100)
+    return Image.alpha_composite(result, process)

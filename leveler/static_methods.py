@@ -8,14 +8,28 @@ import re
 
 from .config import db
 
+from typing import NoReturn
+from discord import Member
+
 user_directory = "users"
 
 
-async def get_user_name(user):
+async def get_user_name(user: Member) -> str:
     if await db.mention():
         return user.mention
     else:
         return user.name
+
+
+def get_user_display_name(user: Member, max_length: int) -> str:
+    if user.name == user.display_name:
+        return user.name
+    else:
+        return "{} ({})".format(
+            user.name,
+            _truncate_text(user.display_name, max_length - len(user.name) - 3),
+            max_length,
+        )
 
 
 def pop_database():
@@ -114,28 +128,18 @@ def _is_hex(color: str):
     return re.search(reg_ex, str(color))
 
 
-async def _find_guild_rank(user, guild):
-    targetid = str(user.id)
-    users = []
+async def _find_guild_rank(user: Member) -> int:
+    users = {}
 
-    for userinfo in db.users.find({}):
-        try:
-            guild_exp = 0
-            userid = userinfo["user_id"]
-            for i in range(userinfo["servers"][str(guild.id)]["level"]):
-                guild_exp += _required_exp(i)
-            guild_exp += userinfo["servers"][str(guild.id)]["current_exp"]
-            users.append((str(userid), guild_exp))
-        except:
-            pass
-
-    sorted_list = sorted(users, key=operator.itemgetter(1), reverse=True)
-
-    rank = 1
-    for a_user in sorted_list:
-        if a_user[0] == targetid:
-            return rank
-        rank += 1
+    for member_id, member_info in await db.all_members(user.guild):
+        print(member_id, member_info)
+        guild_exp = 0
+        for i in range(member_info["level"]):
+            guild_exp += _required_exp(i)
+        guild_exp += member_info["current_exp"]
+        users[member_id] = guild_exp
+    user_exp = users.get(user.id, 0)
+    return sum(1 for xp in users.values() if xp > user_exp)
 
 
 async def _find_guild_rep_rank(user, guild):
