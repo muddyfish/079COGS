@@ -14,7 +14,6 @@ from .on_message import _handle_on_message
 
 def setup(bot):
     Leveler.profile = profile
-    Leveler.rank = rank
     Leveler.lvlinfo = lvlinfo
     Leveler.lvlset = lvlset
     Leveler.lvladmin = lvladmin
