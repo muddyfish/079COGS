@@ -43,8 +43,7 @@ async def rep(self, ctx, user: discord.Member = None):
 async def failure_message(ctx, delta):
     seconds = 43200 - delta
     if seconds < 0:
-        await ctx.send("**You can give a rep!**")
-        return
+        return await ctx.send("**You can give a rep!**")
 
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
