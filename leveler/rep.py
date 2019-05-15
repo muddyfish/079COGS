@@ -37,9 +37,7 @@ async def rep(self, ctx, user: discord.Member = None):
     db.users.update_one(
         {"user_id": str(str(user.id))}, {"$set": {"rep": userinfo["rep"] + 1}}
     )
-    return await ctx.send(
-        "**You have just given {} a reputation point!**".format(self._is_mention(user))
-    )
+    return await ctx.send(f"**You have just given {self._is_mention(user)} a reputation point!**")
 
 
 async def failure_message(ctx, delta):
@@ -50,8 +48,5 @@ async def failure_message(ctx, delta):
 
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
-    await ctx.send(
-        "**You need to wait {} hours, {} minutes, and {} seconds until you can give reputation again!**".format(
-            int(h), int(m), int(s)
-        )
-    )
+    await ctx.send(f"**You need to wait {int(h)} hours, {int(m)} minutes, and {int(s)} seconds "
+                   f"until you can give reputation again!**")
