@@ -53,8 +53,7 @@ async def add_category(embed: Embed, category: str, backgrounds: Dict[str, str])
         f"[{background_name}]({backgrounds[background_name]})"
         for background_name in sorted(backgrounds)
     ]
-    max_bg = min(max_backgrounds, len(bg_urls))
-    bgs = ", ".join(bg_urls[0:max_bg])
+    bgs = ", ".join(bg_urls[:min(max_backgrounds, len(bg_urls))])
     if len(bg_urls) >= max_backgrounds:
         bgs += "..."
     embed.add_field(name=category.upper(), value=bgs, inline=False)
