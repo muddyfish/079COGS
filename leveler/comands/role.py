@@ -46,19 +46,19 @@ async def role_unlink(ctx, role_name: str):
     """Delete a role/level association."""
     guild = ctx.message.guild
 
-    guild_roles = db.roles.find_one({"guild_id": str(guild.id)})
-    roles = guild_roles["roles"]
+    role_obj = find(lambda r: r.name == role_name, guild.roles)
+    if role_obj is None:
+        return await ctx.send(f"**The `{role_name}` role doesn't exist!**")
 
-    if role_name in roles:
-        await ctx.send(
-            "**Role/Level association `{}`/`{}` removed.**".format(
-                role_name, roles[role_name]["level"]
-            )
-        )
-        del roles[role_name]
-        db.roles.update_one({"guild_id": str(guild.id)}, {"$set": {"roles": roles}})
+    role_info = db.role(role_obj)
+    role_level = await role_info.level()
+
+    if role_level is not None:
+        await ctx.send(f"**Role/Level association `{role_name}`/`{role_level}` removed.**")
+        await role_info.level.set(None)
+        await role_info.remove_role.set(None)
     else:
-        await ctx.send("**The `{}` role is not linked to any levels!**".format(role_name))
+        await ctx.send(f"**The `{role_name}` role is not linked to any levels!**")
 
 
 @checks.mod_or_permissions(manage_roles=True)
