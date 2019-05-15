@@ -8,8 +8,8 @@ import re
 
 from .config import db
 
-from typing import NoReturn
-from discord import Member
+from typing import NoReturn, Dict
+from discord import Member, Guild
 
 user_directory = "users"
 
@@ -128,16 +128,34 @@ def _is_hex(color: str):
     return re.search(reg_ex, str(color))
 
 
-async def _find_guild_rank(user: Member) -> int:
+async def guild_exp(guild: Guild) -> Dict[int, int]:
     users = {}
-
-    for member_id, member_info in await db.all_members(user.guild):
-        print(member_id, member_info)
+    for member_id, member_info in await db.all_members(guild):
         guild_exp = 0
         for i in range(member_info["level"]):
             guild_exp += _required_exp(i)
         guild_exp += member_info["current_exp"]
         users[member_id] = guild_exp
+    return users
+
+
+async def guild_level(guild: Guild) -> Dict[int, int]:
+    users = {}
+    for member_id, member_info in await db.all_members(guild):
+        users[member_id] = member_info["level"]
+    return users
+
+
+async def all_rep() -> Dict[int, int]:
+    return {member_id: member_info["rep"] for member_id, member_info in (await db.all_users()).items()}
+
+
+async def all_exp() -> Dict[int, int]:
+    return {member_id: member_info["total_exp"] for member_id, member_info in (await db.all_users()).items()}
+
+
+async def _find_guild_rank(user: Member) -> int:
+    users = await guild_exp(user.guild)
     user_exp = users.get(user.id, 0)
     return sum(1 for xp in users.values() if xp > user_exp)
 
@@ -205,21 +223,9 @@ async def _find_global_rank(user):
 
 
 async def _find_global_rep_rank(user):
-    users = []
-
-    for userinfo in db.users.find({}):
-        try:
-            userid = userinfo["user_id"]
-            users.append((str(userid), userinfo["rep"]))
-        except KeyError:
-            pass
-    sorted_list = sorted(users, key=operator.itemgetter(1), reverse=True)
-
-    rank = 1
-    for stats in sorted_list:
-        if stats[0] == str(user.id):
-            return rank
-        rank += 1
+    users = await all_rep()
+    user_rep = users.get(user.id, 0)
+    return sum(1 for rep in users.values() if rep > user_rep)
 
 
 def _badge_convert_dict(userinfo):

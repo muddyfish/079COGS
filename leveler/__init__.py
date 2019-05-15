@@ -15,7 +15,6 @@ from .on_message import _handle_on_message
 def setup(bot):
     Leveler.profile = profile
     Leveler.rank = rank
-    Leveler.top = top
     Leveler.lvlinfo = lvlinfo
     Leveler.lvlset = lvlset
     Leveler.lvladmin = lvladmin
@@ -28,6 +27,7 @@ def setup(bot):
     n.rep = rep
     n.role = role
     n.rank = rank
+    n.top = top
 
     bot.add_listener(n._handle_on_message, "on_message")
     bot.add_cog(n)

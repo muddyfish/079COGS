@@ -89,7 +89,6 @@ class Leveler(commands.Cog):
             colors.append("".join(format(c, "02x") for c in peak))
         return colors  # returns array
 
-
     # handles user creation, adding new guild, blocking
     async def _create_user(self, user, guild):
         try:
