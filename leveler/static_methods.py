@@ -205,21 +205,9 @@ async def _find_guild_exp(user, guild):
 
 
 async def _find_global_rank(user):
-    users = []
-
-    for userinfo in db.users.find({}):
-        try:
-            userid = userinfo["user_id"]
-            users.append((str(userid), userinfo["total_exp"]))
-        except KeyError:
-            pass
-    sorted_list = sorted(users, key=operator.itemgetter(1), reverse=True)
-
-    rank = 1
-    for stats in sorted_list:
-        if stats[0] == str(user.id):
-            return rank
-        rank += 1
+    users = await all_exp()
+    user_exp = users.get(user.id, 0)
+    return sum(1 for xp in users.values() if xp > user_exp)
 
 
 async def _find_global_rep_rank(user):

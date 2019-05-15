@@ -62,11 +62,10 @@ default_user = {
     "rep": 0,
     "badges": {},
     "active_badges": {},
-    "rep_color": [],
-    "badge_col_color": [],
-    "rep_block": 0,
-    "chat_block": 0,
-    "profile_block": 0,
+    "rep_color": (92, 130, 203, 230),
+    "badge_col_color": (128, 151, 165, 230),
+    "profile_info_color": (30, 30, 30, 220),
+    "profile_exp_color": (255, 255, 255, 230)
 }
 
 default_role = {

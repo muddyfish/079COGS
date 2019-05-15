@@ -16,3 +16,4 @@ def fileIO(path, *args):
 font_thin_file = munge_path("fonts/Uni_Sans_Thin.ttf")
 font_heavy_file = munge_path("fonts/Uni_Sans_Heavy.ttf")
 font_bold_file = munge_path("fonts/SourceSansPro-Semibold.ttf")
+font_file = munge_path("fonts", "SourceSansPro-Regular.ttf")

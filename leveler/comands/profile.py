@@ -1,94 +1,44 @@
 from redbot.core import commands, bank
-import discord
-import time
-import os
 from PIL import ImageFont, Image, ImageDraw, ImageOps
 import string
 import platform
 import operator
 import textwrap
-from ..leveler import munge_path, db, font_unicode_file, default_avatar_url
-from ..static_methods import _badge_convert_dict, _contrast, _truncate_text, _center, _find_global_rank, _add_corners, _level_exp, _find_level, _required_exp
+
+from ..leveler import font_unicode_file
+from ..static_methods import _contrast, _truncate_text, _center, _find_global_rank, _add_corners, _level_exp, _find_level, _required_exp, get_user_name
+
+from aiohttp import ClientSession
+from discord import Member, File
+from io import BytesIO
+
+from ..config import db
+from ..permissions import leveler_enabled
+from ..path_munger import font_thin_file, font_bold_file, font_heavy_file, font_file
 
 
 @commands.cooldown(1, 10, commands.BucketType.user)
 @commands.command(name="profile", pass_context=True, no_pm=True)
-async def profile(leveler, ctx, *, user: discord.Member = None):
+@leveler_enabled
+async def profile(ctx, *, user: Member = None):
     """Displays a user profile."""
     if user is None:
         user = ctx.message.author
-    channel = ctx.message.channel
-    guild = user.guild
-    curr_time = time.time()
 
-    # creates user if doesn't exist
-    await leveler._create_user(user, guild)
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
+    async with ClientSession(loop=ctx.bot.loop) as session:
+        image = await draw_profile(user, session)
 
-    # check if disabled
-    if str(guild.id) in leveler.settings["disabled_guilds"]:
-        await ctx.send("**Leveler commands for this guild are disabled!**")
-        return
+    image_buffer = BytesIO()
+    image.save(image_buffer, "png")
+    image_buffer.seek(0)
 
-    # no cooldown for text only
-    if "text_only" in leveler.settings and str(guild.id) in leveler.settings["text_only"]:
-        em = await profile_text(leveler, user, guild, userinfo)
-        await channel.send("", embed=em)
-    else:
-        await leveler.draw_profile(user, guild)
-
-        await channel.send(
-            "**User profile for {}**".format(leveler._is_mention(user)),
-            file=discord.File(munge_path("temp/{}_profile.png".format(str(user.id)))),
-        )
-        db.users.update_one(
-            {"user_id": str(str(user.id))}, {"$set": {"profile_block": curr_time}}, upsert=True
-        )
-        try:
-            os.remove(munge_path("temp/{}_profile.png".format(str(user.id))))
-        except:
-            pass
-
-
-async def profile_text(leveler, user, guild, userinfo):
-    def test_empty(text):
-        if text == "":
-            return "None"
-        else:
-            return text
-
-    em = discord.Embed(description="", colour=user.colour)
-    em.add_field(name="Title:", value=test_empty(userinfo["title"]))
-    em.add_field(name="Reps:", value=userinfo["rep"])
-    em.add_field(name="Global Rank:", value="#{}".format(await leveler._find_global_rank(user)))
-    em.add_field(
-        name="guild Rank:", value="#{}".format(await leveler._find_guild_rank(user, guild))
+    await ctx.send(
+        f"**User profile for {await get_user_name(user)}**",
+        file=File(filename="rank.png", fp=image_buffer)
     )
-    em.add_field(
-        name="guild Level:", value=format(userinfo["servers"][str(guild.id)]["level"])
-    )
-    em.add_field(name="Total Exp:", value=userinfo["total_exp"])
-    em.add_field(name="guild Exp:", value=await leveler._find_guild_exp(user, guild))
-    try:
-        credits = await bank.get_balance(user)
-    except:
-        credits = 0
-    em.add_field(name="Credits: ", value="${}".format(credits))
-    em.add_field(name="Info: ", value=test_empty(userinfo["info"]))
-    em.add_field(
-        name="Badges: ", value=test_empty(", ".join(userinfo["badges"])).replace("_", " ")
-    )
-    em.set_author(name="Profile for {}".format(user.name), url=user.avatar_url)
-    em.set_thumbnail(url=user.avatar_url)
-    return em
 
 
-async def draw_profile(self, user, guild):
-    font_thin_file = munge_path("fonts", "Uni_Sans_Thin.ttf")
-    font_heavy_file = munge_path("fonts", "Uni_Sans_Heavy.ttf")
-    font_file = munge_path("fonts", "SourceSansPro-Regular.ttf")
-    font_bold_file = munge_path("fonts", "SourceSansPro-Semibold.ttf")
-
+async def draw_profile(user: Member, session: ClientSession) -> Image:
     name_fnt = ImageFont.truetype(font_heavy_file, 30)
     name_u_fnt = ImageFont.truetype(font_unicode_file, 30)
     title_fnt = ImageFont.truetype(font_heavy_file, 22)
@@ -113,61 +63,35 @@ async def draw_profile(self, user, guild):
                 draw.text((write_pos, y), u"{}".format(char), font=unicode_font, fill=fill)
                 write_pos += unicode_font.getsize(char)[0]
 
+    user_info = db.user(user)
+
     # get urls
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
-    _badge_convert_dict(userinfo)
-    userinfo = db.users.find_one(
-        {"user_id": str(str(user.id))}
-    )  ##############################################
-    bg_url = userinfo["profile_background"]
+    bg_url = await user_info.rank_background()
     profile_url = user.avatar_url
+
+    async with session.get(bg_url) as r:
+        bg_image = Image.open(BytesIO(await r.content.read())).convert("RGBA")
+    async with session.get(profile_url) as r:
+        profile_image = Image.open(BytesIO(await r.content.read())).convert("RGBA")
 
     # COLORS
     white_color = (240, 240, 240, 255)
-    if "rep_color" not in userinfo.keys() or not userinfo["rep_color"]:
-        rep_fill = (92, 130, 203, 230)
-    else:
-        rep_fill = tuple(userinfo["rep_color"])
-    # determines badge section color, should be behind the titlebar
-    if "badge_col_color" not in userinfo.keys() or not userinfo["badge_col_color"]:
-        badge_fill = (128, 151, 165, 230)
-    else:
-        badge_fill = tuple(userinfo["badge_col_color"])
-    if "profile_info_color" in userinfo.keys():
-        info_fill = tuple(userinfo["profile_info_color"])
-    else:
-        info_fill = (30, 30, 30, 220)
-    info_fill_tx = (info_fill[0], info_fill[1], info_fill[2], 150)
-    if "profile_exp_color" not in userinfo.keys() or not userinfo["profile_exp_color"]:
-        exp_fill = (255, 255, 255, 230)
-    else:
-        exp_fill = tuple(userinfo["profile_exp_color"])
+    rep_fill = await user_info.rep_color()
+    badge_fill = await user_info.badge_col_color()
+    info_fill = await user_info.profile_info_color()
+    info_fill_tx = (*info_fill[:3], 150)
+    exp_fill = await user_info.profile_exp_color()
+
+    title = await user_info.title()
+    info = await user_info.info()
+    total_exp = await user_info.total_exp()
+    badges = await user_info.badges()
+    rep = await user_info.rep()
+
     if badge_fill == (128, 151, 165, 230):
         level_fill = white_color
     else:
         level_fill = _contrast(exp_fill, rep_fill, badge_fill)
-
-    # create image objects
-
-    async with self.session.get(bg_url) as r:
-        image = await r.content.read()
-    with open(munge_path("temp/{}_temp_profile_bg.png".format(str(user.id))), "wb") as f:
-        f.write(image)
-    try:
-        async with self.session.get(profile_url) as r:
-            image = await r.content.read()
-    except:
-        async with self.session.get(default_avatar_url) as r:
-            image = await r.content.read()
-    with open(munge_path("temp/{}_temp_profile_profile.png".format(str(user.id))), "wb") as f:
-        f.write(image)
-
-    bg_image = Image.open(
-        munge_path("temp/{}_temp_profile_bg.png".format(str(user.id)))
-    ).convert("RGBA")
-    profile_image = Image.open(
-        munge_path("temp/{}_temp_profile_profile.png".format(str(user.id)))
-    ).convert("RGBA")
 
     # set canvas
     bg_color = (255, 255, 255, 0)
@@ -234,7 +158,7 @@ async def draw_profile(self, user, guild):
         info_text_color,
     )  # NAME
     _write_unicode(
-        userinfo["title"].upper(), head_align, 170, title_fnt, title_u_fnt, info_text_color
+        title.upper(), head_align, 170, title_fnt, title_u_fnt, info_text_color
     )
 
     # draw divider
@@ -244,11 +168,10 @@ async def draw_profile(self, user, guild):
         [(0, 324), (340, 390)], fill=(info_fill[0], info_fill[1], info_fill[2], 255)
     )  # box
 
-    rep_text = "{}".format(userinfo["rep"])
     _write_unicode("❤", 257, 9, rep_fnt, rep_u_fnt, info_text_color)
     draw.text(
-        (_center(278, 340, rep_text, rep_fnt), 10),
-        rep_text,
+        (_center(278, 340, str(rep), rep_fnt), 10),
+        str(rep),
         font=rep_fnt,
         fill=info_text_color,
     )  # Exp Text
@@ -275,21 +198,16 @@ async def draw_profile(self, user, guild):
 
     if "linux" in platform.system().lower():
         global_symbol = u"\U0001F30E "
-        fine_adjust = 1
-    else:
-        global_symbol = "G."
-        fine_adjust = 0
-
-    _write_unicode(
-        global_symbol, 36, label_align + 5, label_fnt, symbol_u_fnt, info_text_color
-    )  # Symbol
-    _write_unicode(
-        global_symbol, 134, label_align + 5, label_fnt, symbol_u_fnt, info_text_color
-    )  # Symbol
+        _write_unicode(
+            global_symbol, 36, label_align + 5, label_fnt, symbol_u_fnt, info_text_color
+        )  # Symbol
+        _write_unicode(
+            global_symbol, 134, label_align + 5, label_fnt, symbol_u_fnt, info_text_color
+        )  # Symbol
 
     # userinfo
-    global_rank = "#{}".format(await _find_global_rank(user))
-    global_level = "{}".format(_find_level(userinfo["total_exp"]))
+    global_rank = f"#{await _find_global_rank(user)}"
+    global_level = str(_find_level(total_exp))
     draw.text(
         (_center(0, 140, global_rank, large_fnt), label_align - 27),
         global_rank,
@@ -304,7 +222,7 @@ async def draw_profile(self, user, guild):
     )  # Exp
     # draw level bar
     exp_font_color = _contrast(exp_fill, light_color, dark_color)
-    exp_frac = int(userinfo["total_exp"] - _level_exp(int(global_level)))
+    exp_frac = int(total_exp - _level_exp(int(global_level)))
     exp_total = _required_exp(int(global_level) + 1)
     bar_length = int(exp_frac / exp_total * 340)
     draw.rectangle(
@@ -321,11 +239,7 @@ async def draw_profile(self, user, guild):
         fill=exp_font_color,
     )  # Exp Text
 
-    try:
-        credits = await bank.get_balance(user)
-    except:
-        credits = 0
-    credit_txt = "${}".format(credits)
+    credit_txt = f"${await bank.get_balance(user)}"
     draw.text(
         (_center(200, 340, credit_txt, large_fnt), label_align - 27),
         _truncate_text(credit_txt, 18),
@@ -333,28 +247,28 @@ async def draw_profile(self, user, guild):
         fill=info_text_color,
     )  # Credits
 
-    if userinfo["title"] == "":
+    if title == "":
         offset = 170
     else:
         offset = 195
     margin = 140
     txt_color = _contrast(info_fill, white_color, dark_color)
-    for line in textwrap.wrap(userinfo["info"], width=32):
+    for line in textwrap.wrap(info, width=32):
         _write_unicode(line, margin, offset, text_fnt, text_u_fnt, txt_color)
         offset += text_fnt.getsize(line)[1] + 2
 
     # sort badges
     priority_badges = []
 
-    for badgename in userinfo["badges"].keys():
-        badge = userinfo["badges"][badgename]
+    for badgename in badges.keys():
+        badge = badges[badgename]
         priority_num = badge["priority_num"]
         if priority_num != 0 and priority_num != -1:
             priority_badges.append((badge, priority_num))
     sorted_badges = sorted(priority_badges, key=operator.itemgetter(1), reverse=True)
 
     # TODO: simplify this. it shouldn't be this complicated... sacrifices conciseness for customizability
-    if "badge_type" not in self.settings.keys() or self.settings["badge_type"] == "circles":
+    if (await db.badge_type()) == "circles":
         # circles require antialiasing
         vert_pos = 172
         right_shift = 0
@@ -385,15 +299,8 @@ async def draw_profile(self, user, guild):
                 # determine image or color for badge bg
                 if await self._valid_image_url(bg_color):
                     # get image
-                    async with self.session.get(bg_color) as r:
-                        image = await r.content.read()
-                    with open(
-                        "temp/{}_temp_badge.png".format(str(user.id)), "wb"
-                    ) as f:
-                        f.write(image)
-                    badge_image = Image.open(
-                        "temp/{}_temp_badge.png".format(str(user.id))
-                    ).convert("RGBA")
+                    async with session.get(bg_color) as r:
+                        badge_image = Image.open(BytesIO(await r.content.read())).convert("RGBA")
                     badge_image = badge_image.resize((raw_length, raw_length), Image.ANTIALIAS)
 
                     # structured like this because if border = 0, still leaves outline.
@@ -466,22 +373,6 @@ async def draw_profile(self, user, guild):
                 outer_mask = mask.resize((size, size), Image.ANTIALIAS)
                 process.paste(output, coord, outer_mask)
 
-            # attempt to remove badge image
-            try:
-                os.remove("temp/{}_temp_badge.png".format(str(user.id)))
-            except:
-                pass
-
     result = Image.alpha_composite(result, process)
     result = _add_corners(result, 25)
-    result.save(munge_path("temp/{}_profile.png".format(str(user.id))), "PNG", quality=100)
-
-    # remove images
-    try:
-        os.remove(munge_path("temp/{}_temp_profile_bg.png".format(str(user.id))))
-    except:
-        pass
-    try:
-        os.remove(munge_path("temp/{}_temp_profile_profile.png".format(str(user.id))))
-    except:
-        pass
+    return result
