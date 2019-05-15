@@ -70,5 +70,11 @@ default_user = {
     "rank_block": 0,
 }
 
+default_role = {
+    "level": None,
+    "remove_role": None
+}
+
 db.register_global(**global_settings)
 db.register_user(**default_user)
+db.register_role(**default_role)

@@ -20,7 +20,6 @@ def setup(bot):
     Leveler.lvlset = lvlset
     Leveler.lvladmin = lvladmin
     Leveler.badge = badge
-    Leveler.role = role
     Leveler.rank = rank
     Leveler._handle_on_message = _handle_on_message
 
@@ -28,6 +27,7 @@ def setup(bot):
 
     n.disp_backgrounds = disp_backgrounds
     n.rep = rep
+    n.role = role
 
     bot.add_listener(n._handle_on_message, "on_message")
     bot.add_cog(n)
