@@ -1,7 +1,9 @@
 from typing import NoReturn, Dict
+
 from redbot.core import commands
-import discord
+
 from discord import Embed
+
 from ..config import db
 from ..permissions import leveler_enabled
 
@@ -21,14 +23,14 @@ async def all_catagories(ctx) -> NoReturn:
     user = ctx.message.author
     backgrounds = await db.backgrounds()
 
-    em = discord.Embed(description="", colour=user.colour)
-    em.set_author(
+    embed = Embed(description="", colour=user.colour)
+    embed.set_author(
         name=f"All Backgrounds for {ctx.bot.user.name}",
         icon_url=ctx.bot.user.avatar_url,
     )
     for category, bgs in backgrounds.items():
-        await add_category(em, category, bgs)
-    await ctx.send(embed=em)
+        await add_category(embed, category, bgs)
+    await ctx.send(embed=embed)
 
 
 async def single_catagory(ctx, catagory: str) -> NoReturn:
@@ -37,13 +39,13 @@ async def single_catagory(ctx, catagory: str) -> NoReturn:
     if catagory not in backgrounds:
         return await ctx.send(f"**Invalid Background Type. ({', '.join(backgrounds)})**")
 
-    em = discord.Embed(description="", colour=user.colour)
-    em.set_author(
+    embed = Embed(description="", colour=user.colour)
+    embed.set_author(
         name=f"{catagory.title()} Backgrounds for {ctx.bot.user.name}",
         icon_url=ctx.bot.user.avatar_url,
     )
-    await add_category(em, catagory, backgrounds[catagory])
-    await ctx.send(embed=em)
+    await add_category(embed, catagory, backgrounds[catagory])
+    await ctx.send(embed=embed)
 
 
 async def add_category(embed: Embed, category: str, backgrounds: Dict[str, str]) -> NoReturn:
