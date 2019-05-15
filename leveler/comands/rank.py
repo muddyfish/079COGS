@@ -175,7 +175,7 @@ async def draw_rank(session: ClientSession, user: Member) -> Image:
         )  # Symbol
 
     # userinfo
-    guild_rank = "#{}".format(await _find_guild_rank(user))
+    guild_rank = f"#{await _find_guild_rank(user)}"
     draw.text(
         (_center(100, 200, guild_rank, large_fnt), v_label_align - 30),
         guild_rank,
@@ -189,11 +189,7 @@ async def draw_rank(session: ClientSession, user: Member) -> Image:
         font=large_fnt,
         fill=info_text_color,
     )  # Level
-    try:
-        credits = await bank.get_balance(user)
-    except:
-        credits = 0
-    credit_txt = f"${credits}"
+    credit_txt = f"${await bank.get_balance(user)}"
     draw.text(
         (_center(260, 360, credit_txt, large_fnt), v_label_align - 30),
         credit_txt,
