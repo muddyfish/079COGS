@@ -56,8 +56,8 @@ async def role_unlink(ctx, role_name: str):
 
     if role_level is not None:
         await ctx.send(f"**Role/Level association `{role_name}`/`{role_level}` removed.**")
-        await role_info.level.set(None)
-        await role_info.remove_role.set(None)
+        await role_info.level.clear()
+        await role_info.remove_role.clear()
     else:
         await ctx.send(f"**The `{role_name}` role is not linked to any levels!**")
 
