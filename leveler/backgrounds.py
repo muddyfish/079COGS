@@ -1,32 +1,32 @@
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import pagify
 import discord
+from .config import db
+from .permissions import leveler_enabled
 
 
 @commands.command(name="backgrounds", pass_context=True, no_pm=True)
+@leveler_enabled
 async def disp_backgrounds(self, ctx, type: str = None):
     """Gives a list of backgrounds. [p]backgrounds [profile|rank|levelup]"""
-    guild = ctx.message.guild
     user = ctx.message.author
+
+    backgrounds = await db.backgrounds()
+
     max_all = 18
-
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("**Leveler commands for this guild are disabled!**")
-        return
-
     em = discord.Embed(description="", colour=user.colour)
     if not type:
         em.set_author(
-            name="All Backgrounds for {}".format(self.bot.user.name),
+            name=f"All Backgrounds for {self.bot.user.name}",
             icon_url=self.bot.user.avatar_url,
         )
 
-        for category in self.backgrounds.keys():
+        for category in backgrounds.keys():
             bg_url = []
-            for background_name in sorted(self.backgrounds[category].keys()):
+            for background_name in sorted(backgrounds[category].keys()):
                 bg_url.append(
                     "[{}]({})".format(
-                        background_name, self.backgrounds[category][background_name]
+                        background_name, backgrounds[category][background_name]
                     )
                 )
             max_bg = min(max_all, len(bg_url))
@@ -59,10 +59,10 @@ async def disp_backgrounds(self, ctx, type: str = None):
 
         if bg_key:
             bg_url = []
-            for background_name in sorted(self.backgrounds[bg_key].keys()):
+            for background_name in sorted(backgrounds[bg_key].keys()):
                 bg_url.append(
                     "[{}]({})".format(
-                        background_name, self.backgrounds[bg_key][background_name]
+                        background_name, backgrounds[bg_key][background_name]
                     )
                 )
             bgs = ", ".join(bg_url)
