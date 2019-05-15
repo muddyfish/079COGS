@@ -8,7 +8,7 @@ from ..permissions import leveler_enabled
 
 @commands.command(name="backgrounds", pass_context=True, no_pm=True)
 @leveler_enabled
-async def disp_backgrounds(self, ctx, type: str = None):
+async def disp_backgrounds(ctx, type: str = None):
     """Gives a list of backgrounds. [p]backgrounds [profile|rank|levelup]"""
 
     if type is None:

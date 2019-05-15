@@ -9,7 +9,7 @@ from ..static_methods import get_user_name
 @commands.cooldown(2, 10, commands.BucketType.user)
 @commands.command(pass_context=True, no_pm=True)
 @leveler_enabled
-async def rep(self, ctx, user: discord.Member = None):
+async def rep(ctx, user: discord.Member = None):
     """Gives a reputation point to a designated player."""
     author = ctx.message.author
     rep_wait_time = await db.rep_cooldown()

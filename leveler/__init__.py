@@ -16,16 +16,18 @@ def setup(bot):
     Leveler.profile = profile
     Leveler.rank = rank
     Leveler.top = top
-    Leveler.rep = rep
     Leveler.lvlinfo = lvlinfo
     Leveler.lvlset = lvlset
     Leveler.lvladmin = lvladmin
     Leveler.badge = badge
     Leveler.role = role
-    Leveler.disp_backgrounds = disp_backgrounds
     Leveler.rank = rank
     Leveler._handle_on_message = _handle_on_message
 
     n = Leveler(bot)
+
+    n.disp_backgrounds = disp_backgrounds
+    n.rep = rep
+
     bot.add_listener(n._handle_on_message, "on_message")
     bot.add_cog(n)
