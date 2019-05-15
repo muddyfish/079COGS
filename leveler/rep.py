@@ -6,15 +6,15 @@ from .leveler import db
 
 @commands.cooldown(2, 10, commands.BucketType.user)
 @commands.command(pass_context=True, no_pm=True)
-async def rep(self, ctx, user: discord.Member = None):
+async def rep(leveler, ctx, user: discord.Member = None):
     """Gives a reputation point to a designated player."""
     org_user = ctx.message.author
     guild = org_user.guild
 
     # creates user if doesn't exist
-    await self._create_user(org_user, guild)
+    await leveler._create_user(org_user, guild)
     if user:
-        await self._create_user(user, guild)
+        await leveler._create_user(user, guild)
 
     # Get the time to wait until they can rep
     org_userinfo = db.users.find_one({"user_id": str(org_user.id)})
@@ -25,10 +25,10 @@ async def rep(self, ctx, user: discord.Member = None):
     if not (user and delta >= 43200.0 and delta > 0):
         return await failure_message(ctx, delta)
 
-    if str(guild.id) in self.settings["disabled_guilds"]:
+    if str(guild.id) in leveler.settings["disabled_guilds"]:
         return await ctx.send("**Leveler commands for this guild are disabled!**")
     if user == org_user:
-        return await ctx.send("**You can't give a rep to yourself!**")
+        return await ctx.send("**You can't give a rep to yourleveler!**")
     if user.bot:
         return await ctx.send("**You can't give a rep to a bot!**")
 
@@ -37,7 +37,7 @@ async def rep(self, ctx, user: discord.Member = None):
     db.users.update_one(
         {"user_id": str(str(user.id))}, {"$set": {"rep": userinfo["rep"] + 1}}
     )
-    return await ctx.send(f"**You have just given {self._is_mention(user)} a reputation point!**")
+    return await ctx.send(f"**You have just given {leveler._is_mention(user)} a reputation point!**")
 
 
 async def failure_message(ctx, delta):
