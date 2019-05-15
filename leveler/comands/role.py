@@ -1,6 +1,6 @@
 from redbot.core import commands
 import discord
-from .leveler import db
+from ..leveler import db
 from redbot.core import checks
 
 

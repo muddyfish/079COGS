@@ -1,15 +1,14 @@
 from .leveler import Leveler
-from .profile import profile
-from .rank import rank
-from .top import top
-from .rep import rep
-from .lvlinfo import lvlinfo
-from .lvlset import lvlset
-from .lvladmin import lvladmin
-from .badge import badge
-from .role import role
-from .backgrounds import disp_backgrounds
-from .rank import rank
+from leveler.comands.profile import profile
+from leveler.comands.top import top
+from leveler.comands.rep import rep
+from leveler.comands.lvlinfo import lvlinfo
+from leveler.comands.lvlset import lvlset
+from leveler.comands.lvladmin import lvladmin
+from leveler.comands.badge import badge
+from leveler.comands.role import role
+from leveler.comands.backgrounds import disp_backgrounds
+from leveler.comands.rank import rank
 from .on_message import _handle_on_message
 
 

@@ -1,7 +1,7 @@
 from redbot.core import commands
 import discord
-from .leveler import db
-from .static_methods import _required_exp, _rgb_to_hex
+from ..leveler import db
+from ..static_methods import _required_exp, _rgb_to_hex
 
 
 @commands.command(pass_context=True, no_pm=True)

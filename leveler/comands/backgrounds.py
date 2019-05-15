@@ -2,8 +2,8 @@ from typing import NoReturn, Dict
 from redbot.core import commands
 import discord
 from discord import Embed
-from .config import db
-from .permissions import leveler_enabled
+from ..config import db
+from ..permissions import leveler_enabled
 
 
 @commands.command(name="backgrounds", pass_context=True, no_pm=True)

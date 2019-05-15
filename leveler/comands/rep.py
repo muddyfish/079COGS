@@ -1,9 +1,9 @@
 from redbot.core import commands
 import discord
 import time
-from .config import db
-from .permissions import leveler_enabled
-from .static_methods import get_user_name
+from ..config import db
+from ..permissions import leveler_enabled
+from ..static_methods import get_user_name
 
 
 @commands.cooldown(2, 10, commands.BucketType.user)

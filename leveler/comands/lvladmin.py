@@ -2,10 +2,10 @@ from redbot.core import commands
 import discord
 import os
 from PIL import Image
-from .leveler import db
 from redbot.core import checks, bank
-from .path_munger import fileIO
-from .static_methods import _level_exp, _required_exp
+from ..leveler import db
+from ..path_munger import fileIO
+from ..static_methods import _level_exp, _required_exp
 
 
 prefix = "!"

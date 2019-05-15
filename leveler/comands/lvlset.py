@@ -1,7 +1,7 @@
 from redbot.core import commands
 import random
-from .leveler import db
-from .static_methods import _hex_to_rgb, _is_hex
+from ..leveler import db
+from ..static_methods import _hex_to_rgb, _is_hex
 
 prefix = "!"
 

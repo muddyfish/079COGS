@@ -5,8 +5,8 @@ import os
 from PIL import ImageFont, Image, ImageDraw
 import string
 import platform
-from .leveler import munge_path, db, default_avatar_url, font_unicode_file
-from .static_methods import _find_guild_rank, _find_guild_exp, _add_corners, _required_exp, _truncate_text, _center
+from ..leveler import munge_path, db, default_avatar_url, font_unicode_file
+from ..static_methods import _find_guild_rank, _find_guild_exp, _add_corners, _required_exp, _truncate_text, _center
 
 
 @commands.cooldown(1, 10, commands.BucketType.user)

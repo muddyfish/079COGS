@@ -2,8 +2,8 @@ from redbot.core import commands
 import discord
 import math
 import operator
-from .leveler import db
-from .static_methods import _find_guild_rank, _find_guild_exp, _find_global_rank, _find_global_rep_rank, _find_guild_rep_rank, _find_guild_level_rank, _required_exp, _truncate_text
+from ..leveler import db
+from ..static_methods import _find_guild_rank, _find_guild_exp, _find_global_rank, _find_global_rep_rank, _find_guild_rep_rank, _find_guild_level_rank, _required_exp, _truncate_text
 
 
 @commands.command(pass_context=True, no_pm=True)
