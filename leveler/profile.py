@@ -1,4 +1,4 @@
-from redbot.core import commands
+from redbot.core import commands, bank
 import discord
 import time
 import os
@@ -7,7 +7,7 @@ import string
 import platform
 import operator
 import textwrap
-from .leveler import munge_path, db, bank, font_unicode_file, default_avatar_url
+from .leveler import munge_path, db, font_unicode_file, default_avatar_url
 from .static_methods import _badge_convert_dict, _contrast, _truncate_text, _center, _find_global_rank, _add_corners, _level_exp, _find_level, _required_exp
 
 
