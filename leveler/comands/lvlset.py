@@ -123,7 +123,7 @@ async def profilecolors(ctx, section: str, color: str):
 
 @rankset.command(name="color", pass_context=True, no_pm=True)
 async def rankcolors(ctx, section: str, color: str = None):
-    """Set info color. e.g [p]lvlset rank color [exp|info] [default|white|hex|auto]"""
+    """Set info color. e.g [p]lvlset rank color [info] [default|white|hex|auto]"""
     user = ctx.message.author
     user_info = db.user(user)
 
@@ -136,23 +136,19 @@ async def rankcolors(ctx, section: str, color: str = None):
     default_a = 200
 
     # get correct section for db query
-    if section == "exp":
-        section_name = "rank_exp_color"
-    elif section == "info":
+    if section == "info":
         section_name = "rank_info_color"
     elif section == "all":
         section_name = "all"
     else:
-        await ctx.send("**Not a valid section. (exp, info, all)**")
+        await ctx.send("**Not a valid section. (info, all)**")
         return
 
     # get correct color choice
     set_color = []
     if color == "auto":
         color_ranks = [random.randint(2, 3), random.randint(0, 1)]
-        if section == "exp":
-            color_ranks = [random.randint(2, 3)]
-        elif section == "info":
+        if section == "info":
             color_ranks = [random.randint(0, 1)]
 
         hex_colors = await _auto_color(await user_info.rank_background, color_ranks)
@@ -162,9 +158,7 @@ async def rankcolors(ctx, section: str, color: str = None):
     elif color == "white":
         set_color = [white_info_color]
     elif color == "default":
-        if section == "exp":
-            set_color = [default_exp]
-        elif section == "info":
+        if section == "info":
             set_color = [default_info_color]
         elif section == "all":
             set_color = [default_exp, default_rep, default_badge, default_info_color]
@@ -176,14 +170,11 @@ async def rankcolors(ctx, section: str, color: str = None):
 
     if section == "all":
         if len(set_color) == 1:
-            await user_info.rank_exp_color.set(set_color[0])
             await user_info.rank_info_color.set(set_color[0])
         elif color == "default":
-            await user_info.rank_exp_color.set(default_exp)
             await user_info.rank_info_color.set(default_info_color)
         elif color == "auto":
-            await user_info.rank_exp_color.set(set_color[0])
-            await user_info.rank_info_color.set(set_color[1])
+            await user_info.rank_info_color.set(set_color[0])
         await ctx.send("**Colors for rank set.**")
     else:
         await user_info.get_attr(section_name).set(set_color[0])

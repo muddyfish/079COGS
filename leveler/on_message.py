@@ -129,7 +129,6 @@ async def _handle_on_message(leveler, message):
     guild = message.guild
     user = message.author
     # creates user if doesn't exist, bots are not logged.
-    await leveler._create_user(user, guild)
     curr_time = time.time()
     userinfo = db.users.find_one({"user_id": str(str(user.id))})
 

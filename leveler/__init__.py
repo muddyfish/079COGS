@@ -13,7 +13,6 @@ from .on_message import _handle_on_message
 
 
 def setup(bot):
-    Leveler.lvlinfo = lvlinfo
     Leveler.lvladmin = lvladmin
     Leveler.badge = badge
     Leveler._handle_on_message = _handle_on_message
@@ -27,6 +26,7 @@ def setup(bot):
     n.top = top
     n.profile = profile
     n.lvlset = lvlset
+    n.lvlinfo = lvlinfo
 
     bot.add_listener(n._handle_on_message, "on_message")
     bot.add_cog(n)

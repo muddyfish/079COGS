@@ -65,7 +65,8 @@ default_user = {
     "rep_color": (92, 130, 203, 230),
     "badge_col_color": (128, 151, 165, 230),
     "profile_info_color": (30, 30, 30, 220),
-    "profile_exp_color": (255, 255, 255, 230)
+    "profile_exp_color": (255, 255, 255, 230),
+    "levelup_info_color": (30, 30, 30, 150)
 }
 
 default_role = {
