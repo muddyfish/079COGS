@@ -3,14 +3,6 @@ import operator
 import random
 import aiohttp
 
-
-try:
-    import scipy
-    import scipy.misc
-    import scipy.cluster
-except:
-    pass
-
 from PIL import Image
 
 from pymongo import MongoClient
@@ -49,89 +41,3 @@ class Leveler(commands.Cog):
         dbs = client.database_names()
         if "leveler" not in dbs:
             pop_database()
-
-    # uses k-means algorithm to find color from bg, rank is abundance of color, descending
-    async def _auto_color(self, ctx, url: str, ranks):
-        phrases = ["Calculating colors..."]  # in case I want more
-        # try:
-        await ctx.send("**{}**".format(random.choice(phrases)))
-        clusters = 10
-
-        async with self.session.get(url) as r:
-            image = await r.content.read()
-        with open("temp_auto.png", "wb") as f:
-            f.write(image)
-
-        im = Image.open("temp_auto.png").convert("RGBA")
-        im = im.resize((290, 290))  # resized to reduce time
-        ar = scipy.misc.fromimage(im)
-        shape = ar.shape
-        ar = ar.reshape(scipy.product(shape[:2]), shape[2])
-
-        codes, dist = scipy.cluster.vq.kmeans(ar.astype(float), clusters)
-        vecs, dist = scipy.cluster.vq.vq(ar, codes)  # assign codes
-        counts, bins = scipy.histogram(vecs, len(codes))  # count occurrences
-
-        # sort counts
-        freq_index = []
-        index = 0
-        for count in counts:
-            freq_index.append((index, count))
-            index += 1
-        sorted_list = sorted(freq_index, key=operator.itemgetter(1), reverse=True)
-
-        colors = []
-        for rank in ranks:
-            color_index = min(rank, len(codes))
-            peak = codes[sorted_list[color_index][0]]  # gets the original index
-            peak = peak.astype(int)
-
-            colors.append("".join(format(c, "02x") for c in peak))
-        return colors  # returns array
-
-    # handles user creation, adding new guild, blocking
-    async def _create_user(self, user, guild):
-        try:
-            userinfo = db.users.find_one({"user_id": str(str(user.id))})
-            if not userinfo:
-                new_account = {
-                    "user_id": str(user.id),
-                    "username": user.name,
-                    "servers": {},
-                    "total_exp": 0,
-                    "profile_background": self.backgrounds["profile"]["default"],
-                    "rank_background": self.backgrounds["rank"]["default"],
-                    "levelup_background": self.backgrounds["levelup"]["default"],
-                    "title": "",
-                    "info": "I am a mysterious person.",
-                    "rep": 0,
-                    "badges": {},
-                    "active_badges": {},
-                    "rep_color": [],
-                    "badge_col_color": [],
-                    "rep_block": 0,
-                    "chat_block": 0,
-                    "profile_block": 0,
-                }
-                db.users.insert_one(new_account)
-
-            userinfo = db.users.find_one({"user_id": str(str(user.id))})
-
-            if "username" not in userinfo or userinfo["username"] != user.name:
-                db.users.update_one(
-                    {"user_id": str(str(user.id))}, {"$set": {"username": user.name}}, upsert=True
-                )
-
-            if "servers" not in userinfo or str(guild.id) not in userinfo["servers"]:
-                db.users.update_one(
-                    {"user_id": str(str(user.id))},
-                    {
-                        "$set": {
-                            "servers.{}.level".format(str(guild.id)): 0,
-                            "servers.{}.current_exp".format(str(guild.id)): 0,
-                        }
-                    },
-                    upsert=True,
-                )
-        except AttributeError:
-            pass

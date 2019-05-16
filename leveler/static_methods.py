@@ -5,13 +5,21 @@ from .leveler import db
 from PIL import Image, ImageDraw
 import operator
 import re
+import random
+from aiohttp import ClientSession
+
+import scipy
+import scipy.misc
+import scipy.cluster
 
 from .config import db
 
 from typing import NoReturn, Dict
 from discord import Member, Guild
+from redbot.core import bank
 
 user_directory = "users"
+prefix = "!"
 
 
 async def get_user_name(user: Member) -> str:
@@ -234,3 +242,85 @@ def _hex_to_rgb(hex_num: str, a: int):
     colors = [int(h[i:i + 2], 16) for i in (0, 2, 4)]
     colors.append(a)
     return tuple(colors)
+
+
+# uses k-means algorithm to find color from bg, rank is abundance of color, descending
+async def _auto_color(ctx, url: str, ranks):
+    phrases = ["Calculating colors..."]  # in case I want more
+    # try:
+    await ctx.send("**{}**".format(random.choice(phrases)))
+    clusters = 10
+
+    async with ClientSession(loop=ctx.bot.loop) as session:
+        async with session.get(url) as r:
+            image = await r.content.read()
+    with open("temp_auto.png", "wb") as f:
+        f.write(image)
+
+    im = Image.open("temp_auto.png").convert("RGBA")
+    im = im.resize((290, 290))  # resized to reduce time
+    ar = scipy.misc.fromimage(im)
+    shape = ar.shape
+    ar = ar.reshape(scipy.product(shape[:2]), shape[2])
+
+    codes, dist = scipy.cluster.vq.kmeans(ar.astype(float), clusters)
+    vecs, dist = scipy.cluster.vq.vq(ar, codes)  # assign codes
+    counts, bins = scipy.histogram(vecs, len(codes))  # count occurrences
+
+    # sort counts
+    freq_index = []
+    index = 0
+    for count in counts:
+        freq_index.append((index, count))
+        index += 1
+    sorted_list = sorted(freq_index, key=operator.itemgetter(1), reverse=True)
+
+    colors = []
+    for rank in ranks:
+        color_index = min(rank, len(codes))
+        peak = codes[sorted_list[color_index][0]]  # gets the original index
+        peak = peak.astype(int)
+
+        colors.append("".join(format(c, "02x") for c in peak))
+    return colors
+
+
+async def process_purchase(ctx):
+    user = ctx.message.author
+    price = await db.bg_price()
+
+    try:
+        if price != 0:
+            if not bank.can_spend(user, price):
+                await ctx.send(
+                    "**Insufficient funds. Backgrounds changes cost: ${}**".format(
+                        price
+                    )
+                )
+                return False
+            else:
+                await ctx.send(
+                    "**{}, you are about to buy a background for `{}`. Confirm by typing `yes`.**".format(
+                        get_user_name(user), price
+                    )
+                )
+                answer = await ctx.bot.wait_for_message(timeout=15, author=user)
+                if answer is None:
+                    await ctx.send("**Purchase canceled.**")
+                    return False
+                elif "yes" not in answer.content.lower():
+                    await ctx.send("**Background not purchased.**")
+                    return False
+                else:
+                    new_balance = (await bank.get_balance(user)) - price
+                    await bank.set_balance(user, new_balance)
+                    return True
+        else:
+            return True
+    except:
+        await ctx.send(
+            "**There was an error with economy cog. Fix to allow purchases or set price to $0. Currently ${}**".format(
+                prefix, price
+            )
+        )
+        return False

@@ -114,55 +114,6 @@ async def lvlmsglock(self, ctx):
     fileIO("settings.json", "save", self.settings)
 
 
-async def _process_purchase(self, ctx):
-    user = ctx.message.author
-
-    try:
-        if self.settings["bg_price"] != 0:
-            if not bank.can_spend(user, self.settings["bg_price"]):
-                await ctx.send(
-                    "**Insufficient funds. Backgrounds changes cost: ${}**".format(
-                        self.settings["bg_price"]
-                    )
-                )
-                return False
-            else:
-                await ctx.send(
-                    "**{}, you are about to buy a background for `{}`. Confirm by typing `yes`.**".format(
-                        self._is_mention(user), self.settings["bg_price"]
-                    )
-                )
-                answer = await self.bot.wait_for_message(timeout=15, author=user)
-                if answer is None:
-                    await ctx.send("**Purchase canceled.**")
-                    return False
-                elif "yes" not in answer.content.lower():
-                    await ctx.send("**Background not purchased.**")
-                    return False
-                else:
-                    new_balance = bank.get_balance(user) - self.settings["bg_price"]
-                    await bank.set_balance(user, new_balance)
-                    return True
-        else:
-            if self.settings["bg_price"] == 0:
-                return True
-            else:
-                await ctx.send(
-                    "**You don't have an account. Do {}bank register**".format(prefix)
-                )
-                return False
-    except:
-        if self.settings["bg_price"] == 0:
-            return True
-        else:
-            await ctx.send(
-                "**There was an error with economy cog. Fix to allow purchases or set price to $0. Currently ${}**".format(
-                    prefix, self.settings["bg_price"]
-                )
-            )
-            return False
-
-
 @checks.is_owner()
 @lvladmin.command(no_pm=True)
 async def setprice(self, ctx, price: int):

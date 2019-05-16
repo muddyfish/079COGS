@@ -6,7 +6,7 @@ import discord
 import math
 import operator
 
-from ..static_methods import  _truncate_text, all_rep, all_exp, guild_level, guild_exp
+from ..static_methods import _truncate_text, all_rep, all_exp, guild_level, guild_exp
 from ..permissions import leveler_enabled
 
 

@@ -1,47 +1,47 @@
 from redbot.core import commands
 import random
-from ..leveler import db
-from ..static_methods import _hex_to_rgb, _is_hex
+from ..config import db
+from ..static_methods import _hex_to_rgb, _is_hex, _auto_color, process_purchase
+from ..permissions import leveler_enabled
+
 
 prefix = "!"
 
 
 @commands.group(name="lvlset", pass_context=True)
-async def lvlset(self, ctx):
+@leveler_enabled
+async def lvlset(ctx):
     """Profile Configuration Options"""
     if ctx.invoked_subcommand is None:
         return
 
 
 @lvlset.group(name="profile", pass_context=True)
-async def profileset(self, ctx):
+async def profileset(ctx):
     """Profile options"""
     if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
         return
 
 
 @lvlset.group(name="rank", pass_context=True)
-async def rankset(self, ctx):
+async def rankset(ctx):
     """Rank options"""
     if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
         return
 
 
 @lvlset.group(name="levelup", pass_context=True)
-async def levelupset(self, ctx):
+async def levelupset(ctx):
     """Level-Up options"""
     if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
         return
 
 
 @profileset.command(name="color", pass_context=True, no_pm=True)
-async def profilecolors(self, ctx, section: str, color: str):
+async def profilecolors(ctx, section: str, color: str):
     """Set info color. e.g [p]lvlset profile color [exp|rep|badge|info|all] [default|white|hex|auto]"""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
+    user_info = db.user(user)
 
     section = section.lower()
     default_info_color = (30, 30, 30, 200)
@@ -50,14 +50,6 @@ async def profilecolors(self, ctx, section: str, color: str):
     default_badge = (128, 151, 165, 230)
     default_exp = (255, 255, 255, 230)
     default_a = 200
-
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("**Leveler commands for this guild are disabled!**")
-        return
-
-    if "text_only" in self.settings and str(guild.id) in self.settings["text_only"]:
-        await ctx.send("**Text-only commands allowed.**")
-        return
 
     all_sections = {
         "rep": "rep_color",
@@ -71,6 +63,7 @@ async def profilecolors(self, ctx, section: str, color: str):
         return await ctx.send("**Not a valid section. (rep, exp, badge, info, all)**")
 
     # get correct color choice
+    set_color = []
     if color == "auto":
         if section == "exp":
             color_ranks = [random.randint(2, 3)]
@@ -83,8 +76,7 @@ async def profilecolors(self, ctx, section: str, color: str):
         else:
             color_ranks = [random.randint(2, 3), random.randint(2, 3), 0, random.randint(0, 2)]
 
-        hex_colors = await self._auto_color(userinfo["profile_background"], color_ranks)
-        set_color = []
+        hex_colors = await _auto_color(ctx, await user_info.profile_background(), color_ranks)
         for hex_color in hex_colors:
             color_temp = _hex_to_rgb(hex_color, default_a)
             set_color.append(color_temp)
@@ -105,62 +97,35 @@ async def profilecolors(self, ctx, section: str, color: str):
     elif _is_hex(color):
         set_color = [_hex_to_rgb(color, default_a)]
     else:
-        await ctx.send("**Not a valid color. (default, hex, white, auto)**")
-        return
+        return await ctx.send("**Not a valid color. (default, hex, white, auto)**")
 
     if section == "all":
         if len(set_color) == 1:
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {
-                    "$set": {
-                        "profile_exp_color": set_color[0],
-                        "rep_color": set_color[0],
-                        "badge_col_color": set_color[0],
-                        "profile_info_color": set_color[0],
-                    }
-                },
-            )
+            await user_info.profile_exp_color.set(set_color[0])
+            await user_info.rep_color.set(set_color[0])
+            await user_info.badge_col_color.set(set_color[0])
+            await user_info.profile_info_color.set(set_color[0])
         elif color == "default":
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {
-                    "$set": {
-                        "profile_exp_color": default_exp,
-                        "rep_color": default_rep,
-                        "badge_col_color": default_badge,
-                        "profile_info_color": default_info_color,
-                    }
-                },
-            )
+            await user_info.profile_exp_color.set(default_exp)
+            await user_info.rep_color.set(default_rep)
+            await user_info.badge_col_color.set(default_badge)
+            await user_info.profile_info_color.set(default_info_color)
         elif color == "auto":
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {
-                    "$set": {
-                        "profile_exp_color": set_color[0],
-                        "rep_color": set_color[1],
-                        "badge_col_color": set_color[2],
-                        "profile_info_color": set_color[3],
-                    }
-                },
-            )
+            await user_info.profile_exp_color.set(set_color[0])
+            await user_info.rep_color.set(set_color[1])
+            await user_info.badge_col_color.set(set_color[2])
+            await user_info.profile_info_color.set(set_color[3])
         await ctx.send("**Colors for profile set.**")
     else:
-        db.users.update_one(
-            {"user_id": str(str(user.id))}, {"$set": {section_name: set_color[0]}}
-        )
+        await user_info.get_attr(section_name).set(set_color[0])
         await ctx.send("**Color for profile {} set.**".format(section))
 
 
 @rankset.command(name="color", pass_context=True, no_pm=True)
-async def rankcolors(self, ctx, section: str, color: str = None):
+async def rankcolors(ctx, section: str, color: str = None):
     """Set info color. e.g [p]lvlset rank color [exp|info] [default|white|hex|auto]"""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
+    user_info = db.user(user)
 
     section = section.lower()
     default_info_color = (30, 30, 30, 200)
@@ -169,14 +134,6 @@ async def rankcolors(self, ctx, section: str, color: str = None):
     default_rep = (92, 130, 203, 230)
     default_badge = (128, 151, 165, 230)
     default_a = 200
-
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("**Leveler commands for this guild are disabled!**")
-        return
-
-    if "text_only" in self.settings and str(guild.id) in self.settings["text_only"]:
-        await ctx.send("**Text-only commands allowed.**")
-        return
 
     # get correct section for db query
     if section == "exp":
@@ -190,16 +147,15 @@ async def rankcolors(self, ctx, section: str, color: str = None):
         return
 
     # get correct color choice
+    set_color = []
     if color == "auto":
+        color_ranks = [random.randint(2, 3), random.randint(0, 1)]
         if section == "exp":
             color_ranks = [random.randint(2, 3)]
         elif section == "info":
             color_ranks = [random.randint(0, 1)]
-        elif section == "all":
-            color_ranks = [random.randint(2, 3), random.randint(0, 1)]
 
-        hex_colors = await self._auto_color(userinfo["rank_background"], color_ranks)
-        set_color = []
+        hex_colors = await _auto_color(await user_info.rank_background, color_ranks)
         for hex_color in hex_colors:
             color_temp = _hex_to_rgb(hex_color, default_a)
             set_color.append(color_temp)
@@ -220,54 +176,30 @@ async def rankcolors(self, ctx, section: str, color: str = None):
 
     if section == "all":
         if len(set_color) == 1:
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {"$set": {"rank_exp_color": set_color[0], "rank_info_color": set_color[0]}},
-            )
+            await user_info.rank_exp_color.set(set_color[0])
+            await user_info.rank_info_color.set(set_color[0])
         elif color == "default":
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {
-                    "$set": {
-                        "rank_exp_color": default_exp,
-                        "rank_info_color": default_info_color,
-                    }
-                },
-            )
+            await user_info.rank_exp_color.set(default_exp)
+            await user_info.rank_info_color.set(default_info_color)
         elif color == "auto":
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {"$set": {"rank_exp_color": set_color[0], "rank_info_color": set_color[1]}},
-            )
+            await user_info.rank_exp_color.set(set_color[0])
+            await user_info.rank_info_color.set(set_color[1])
         await ctx.send("**Colors for rank set.**")
     else:
-        db.users.update_one(
-            {"user_id": str(str(user.id))}, {"$set": {section_name: set_color[0]}}
-        )
+        await user_info.get_attr(section_name).set(set_color[0])
         await ctx.send("**Color for rank {} set.**".format(section))
 
 
 @levelupset.command(name="color", pass_context=True, no_pm=True)
-async def levelupcolors(self, ctx, section: str, color: str = None):
+async def levelupcolors(ctx, section: str, color: str = None):
     """Set info color. e.g [p]lvlset color [info] [default|white|hex|auto]"""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
+    user_info = db.user(user)
 
     section = section.lower()
     default_info_color = (30, 30, 30, 200)
     white_info_color = (150, 150, 150, 180)
     default_a = 200
-
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("**Leveler commands for this guild are disabled!**")
-        return
-
-    if "text_only" in self.settings and str(guild.id) in self.settings["text_only"]:
-        await ctx.send("**Text-only commands allowed.**")
-        return
 
     # get correct section for db query
     if section == "info":
@@ -277,11 +209,10 @@ async def levelupcolors(self, ctx, section: str, color: str = None):
         return
 
     # get correct color choice
+    set_color = []
     if color == "auto":
-        if section == "info":
-            color_ranks = [random.randint(0, 1)]
-        hex_colors = await self._auto_color(userinfo["levelup_background"], color_ranks)
-        set_color = []
+        color_ranks = [random.randint(0, 1)]
+        hex_colors = await _auto_color(ctx, await user_info.levelup_background(), color_ranks)
         for hex_color in hex_colors:
             color_temp = _hex_to_rgb(hex_color, default_a)
             set_color.append(color_temp)
@@ -296,25 +227,20 @@ async def levelupcolors(self, ctx, section: str, color: str = None):
         await ctx.send("**Not a valid color. (default, hex, white, auto)**")
         return
 
-    db.users.update_one({"user_id": str(str(user.id))}, {"$set": {section_name: set_color[0]}})
+    await user_info.get_attr(section_name).set(set_color[0])
     await ctx.send("**Color for level-up {} set.**".format(section))
 
 
 @profileset.command(pass_context=True, no_pm=True)
-async def info(self, ctx, *, info):
+async def info(ctx, *, info):
     """Set your user info."""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
+    user_info = db.user(user)
+
     max_char = 150
 
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("Leveler commands for this guild are disabled.")
-        return
-
     if len(info) < max_char:
-        db.users.update_one({"user_id": str(str(user.id))}, {"$set": {"info": info}})
+        await user_info.info.set(info)
         await ctx.send("**Your info section has been succesfully set!**")
     else:
         await ctx.send(
@@ -323,28 +249,16 @@ async def info(self, ctx, *, info):
 
 
 @levelupset.command(name="bg", pass_context=True, no_pm=True)
-async def levelbg(self, ctx, *, image_name: str):
+async def levelbg(ctx, *, image_name: str):
     """Set your level background"""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
+    user_info = db.user(user)
+    backgrounds = await db.backgrounds()
 
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("Leveler commands for this guild are disabled.")
-        return
-
-    if "text_only" in self.settings and str(guild.id) in self.settings["text_only"]:
-        await ctx.send("**Text-only commands allowed.**")
-        return
-
-    if image_name in self.backgrounds["levelup"].keys():
-        if await self._process_purchase(ctx):
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {"$set": {"levelup_background": self.backgrounds["levelup"][image_name]}},
-            )
-            await ctx.send("**Your new level-up background has been succesfully set!**")
+    if image_name in backgrounds["levelup"].keys():
+        if await process_purchase(ctx):
+            await user_info.levelup_background.set(backgrounds["levelup"][image_name])
+            await ctx.send("**Your new level-up background has been successfully set!**")
     else:
         await ctx.send(
             "That is not a valid bg. See available bgs at `{}backgrounds levelup`".format(
@@ -354,28 +268,16 @@ async def levelbg(self, ctx, *, image_name: str):
 
 
 @profileset.command(name="bg", pass_context=True, no_pm=True)
-async def profilebg(self, ctx, *, image_name: str):
+async def profilebg(ctx, *, image_name: str):
     """Set your profile background"""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
+    user_info = db.user(user)
+    backgrounds = await db.backgrounds()
 
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("Leveler commands for this guild are disabled.")
-        return
-
-    if "text_only" in self.settings and str(guild.id) in self.settings["text_only"]:
-        await ctx.send("**Text-only commands allowed.**")
-        return
-
-    if image_name in self.backgrounds["profile"].keys():
-        if await self._process_purchase(ctx):
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {"$set": {"profile_background": self.backgrounds["profile"][image_name]}},
-            )
-            await ctx.send("**Your new profile background has been succesfully set!**")
+    if image_name in backgrounds["profile"].keys():
+        if await process_purchase(ctx):
+            await user_info.profile_background.set(backgrounds["profile"][image_name])
+            await ctx.send("**Your new profile background has been successfully set!**")
     else:
         await ctx.send(
             "That is not a valid bg. See available bgs at `{}backgrounds profile`".format(
@@ -385,27 +287,15 @@ async def profilebg(self, ctx, *, image_name: str):
 
 
 @rankset.command(name="bg", pass_context=True, no_pm=True)
-async def rankbg(self, ctx, *, image_name: str):
+async def rankbg(ctx, *, image_name: str):
     """Set your rank background"""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
+    user_info = db.user(user)
+    backgrounds = await db.backgrounds()
 
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("Leveler commands for this guild are disabled.")
-        return
-
-    if "text_only" in self.settings and str(guild.id) in self.settings["text_only"]:
-        await ctx.send("**Text-only commands allowed.**")
-        return
-
-    if image_name in self.backgrounds["rank"].keys():
-        if await self._process_purchase(ctx):
-            db.users.update_one(
-                {"user_id": str(str(user.id))},
-                {"$set": {"rank_background": self.backgrounds["rank"][image_name]}},
-            )
+    if image_name in backgrounds["rank"].keys():
+        if await process_purchase(ctx):
+            await user_info.rank_background.set(backgrounds["rank"][image_name])
             await ctx.send("**Your new rank background has been succesfully set!**")
     else:
         await ctx.send(
@@ -416,22 +306,14 @@ async def rankbg(self, ctx, *, image_name: str):
 
 
 @profileset.command(pass_context=True, no_pm=True)
-async def title(self, ctx, *, title):
+async def title(ctx, *, title):
     """Set your title."""
     user = ctx.message.author
-    guild = ctx.message.guild
-    # creates user if doesn't exist
-    await self._create_user(user, guild)
-    userinfo = db.users.find_one({"user_id": str(str(user.id))})
+    user_info = db.user(user)
     max_char = 20
 
-    if str(guild.id) in self.settings["disabled_guilds"]:
-        await ctx.send("Leveler commands for this guild are disabled.")
-        return
-
     if len(title) < max_char:
-        userinfo["title"] = title
-        db.users.update_one({"user_id": str(str(user.id))}, {"$set": {"title": title}})
+        await user_info.info.set(info)
         await ctx.send("**Your title has been succesfully set!**")
     else:
         await ctx.send("**Your title has too many characters! Must be <{}**".format(max_char))
