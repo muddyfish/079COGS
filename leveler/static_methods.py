@@ -12,6 +12,8 @@ import scipy
 import scipy.misc
 import scipy.cluster
 
+from io import BytesIO
+
 from .config import db
 
 from typing import NoReturn, Dict
@@ -323,4 +325,14 @@ async def process_purchase(ctx):
                 prefix, price
             )
         )
+        return False
+
+
+async def _valid_image_url(ctx, url):
+    try:
+        async with ClientSession(loop=ctx.bot.loop) as session:
+            async with session.get(url) as r:
+                Image.open(BytesIO(await r.content.read())).convert("RGBA")
+        return True
+    except:
         return False

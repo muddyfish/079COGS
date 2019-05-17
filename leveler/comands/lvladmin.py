@@ -186,19 +186,6 @@ async def mention(self, ctx):
     fileIO("settings.json", "save", self.settings)
 
 
-async def _valid_image_url(self, url):
-    try:
-        async with self.session.get(url) as r:
-            image = await r.content.read()
-        with open("test.png", "wb") as f:
-            f.write(image)
-        Image.open("test.png").convert("RGBA")
-        os.remove("test.png")
-        return True
-    except:
-        return False
-
-
 @checks.admin_or_permissions(manage_guild=True)
 @lvladmin.command(pass_context=True, no_pm=True)
 async def toggle(self, ctx):

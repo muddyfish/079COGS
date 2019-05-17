@@ -32,23 +32,21 @@ backgrounds = {
     }
 }
 
+badges = {}
+
 settings = {
     "badge_type": "circles",
     "bg_price": 0,
     "chat_cooldown": 120,
-    "disabled_guilds": [],
-    "lvl_msg": [],
     "lvl_msg_lock": {},
     "mention": True,
     "msg_credits": {},
-    "private_lvl_msg": [],
     "rep_cooldown": 43200,
-    "server_roles": {},
-    "text_only": []
 }
 
 global_settings = {
     "backgrounds": backgrounds,
+    "badges": badges,
     **settings,
 }
 
@@ -80,7 +78,16 @@ default_member = {
     "rank_info_color": (140, 140, 140, 230)
 }
 
+default_guild = {
+    "badges": {},
+    "badge_links": {},
+    "disabled": False,
+    "private_lvl_msg": False,
+    "lvl_msg": False
+}
+
 db.register_global(**global_settings)
 db.register_user(**default_user)
 db.register_member(**default_member)
 db.register_role(**default_role)
+db.register_guild(**default_guild)

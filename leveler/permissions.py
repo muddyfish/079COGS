@@ -7,8 +7,7 @@ async def leveler_enabled(ctx: commands.Context):
     guild = ctx.message.guild
     if guild is None:
         return True
-    disabled_guilds = await db.disabled_guilds()
-    if str(guild.id) in disabled_guilds:
+    if await db.guild(guild).disabled():
         await ctx.send("**Leveler commands for this guild are disabled!**")
         return False
     return True
