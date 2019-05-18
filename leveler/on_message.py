@@ -172,7 +172,7 @@ async def _handle_levelup(bot, user, channel):
         guild_identifier = ""
         # private message takes precedent, of course
         if await db.guild(guild).private_lvl_msg():
-            guild_identifier = " on {}".format(guild.name)
+            guild_identifier = f" on {guild.name}"
             channel = user
             name = "You"
 
