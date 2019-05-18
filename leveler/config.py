@@ -37,7 +37,7 @@ badges = {}
 settings = {
     "badge_type": "circles",
     "bg_price": 0,
-    "chat_cooldown": 120,
+    "chat_cooldown": 0,
     "mention": True,
     "rep_cooldown": 43200,
 }
@@ -73,6 +73,7 @@ default_role = {
 default_member = {
     "level": 0,
     "current_exp": 0,
+    "chat_block": 0,
     "rank_info_color": (140, 140, 140, 230)
 }
 
@@ -80,10 +81,10 @@ default_guild = {
     "badges": {},
     "badge_links": {},
     "msg_credits": 0,
-    "lvl_msg_lock": None,
     "disabled": False,
     "private_lvl_msg": False,
-    "lvl_msg": False
+    "lvl_msg": False,
+    "lvl_msg_lock": None
 }
 
 db.register_global(**global_settings)

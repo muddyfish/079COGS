@@ -140,7 +140,7 @@ def _is_hex(color: str):
 
 async def guild_exp(guild: Guild) -> Dict[int, int]:
     users = {}
-    for member_id, member_info in await db.all_members(guild):
+    for member_id, member_info in (await db.all_members(guild)).items():
         guild_exp = 0
         for i in range(member_info["level"]):
             guild_exp += _required_exp(i)

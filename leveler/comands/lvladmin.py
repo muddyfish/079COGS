@@ -175,7 +175,7 @@ async def addprofilebg(ctx, name: str, url: str):
     backgrounds = await db.backgrounds()
     if name in backgrounds["profile"]:
         await ctx.send("**That profile background name already exists!**")
-    elif not await _valid_image_url(url):
+    elif not await _valid_image_url(ctx, url):
         await ctx.send("**That is not a valid image url!**")
     else:
         await db.backgrounds.set(backgrounds)
@@ -189,7 +189,7 @@ async def addrankbg(ctx, name: str, url: str):
     backgrounds = await db.backgrounds()
     if name in backgrounds["rank"]:
         await ctx.send("**That rank background name already exists!**")
-    elif not await _valid_image_url(url):
+    elif not await _valid_image_url(ctx, url):
         await ctx.send("**That is not a valid image url!**")
     else:
         await db.backgrounds.set(backgrounds)
@@ -203,7 +203,7 @@ async def addlevelbg(ctx, name: str, url: str):
     backgrounds = await db.backgrounds()
     if name in backgrounds["levelup"]:
         await ctx.send("**That level-up background name already exists!**")
-    elif not await _valid_image_url(url):
+    elif not await _valid_image_url(ctx, url):
         await ctx.send("**That is not a valid image url!**")
     else:
         await db.backgrounds.set(backgrounds)
@@ -221,7 +221,7 @@ async def setcustombg(ctx, bg_type: str, user_id: int, img_url: str):
         return await ctx.send("**Please choose a valid type: `profile`, `rank`, `levelup`.")
     if not user_id:
         return await ctx.send("**That is not a valid user id!**")
-    if not await _valid_image_url(img_url):
+    if not await _valid_image_url(ctx, img_url):
         return await ctx.send("**That is not a valid image url!**")
 
     user_info = db.user(user_id)
