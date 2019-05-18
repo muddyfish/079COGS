@@ -3,7 +3,6 @@ import discord
 from redbot.core import checks
 from ..config import db
 from ..static_methods import _valid_image_url
-from ..permissions import leveler_enabled
 
 
 prefix = "!"
