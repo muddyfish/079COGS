@@ -169,10 +169,10 @@ async def _handle_levelup(bot, user, channel):
         if lock_channel:
             channel = find(lambda m: m.id == lock_channel, guild.channels)
 
-        guild_identifier = guild.name
+        guild_identifier = ""
         # private message takes precedent, of course
         if await db.guild(guild).private_lvl_msg():
-            guild_identifier = "on {}".format(guild.name)
+            guild_identifier = " on {}".format(guild.name)
             channel = user
             name = "You"
 
@@ -182,7 +182,7 @@ async def _handle_levelup(bot, user, channel):
         image_buffer.seek(0)
 
         await channel.send(
-            f"**{name} just gained a level {guild_identifier}!**",
+            f"**{name} just gained a level{guild_identifier}!**",
             file=discord.File(filename="levelup.png", fp=image_buffer),
         )
 

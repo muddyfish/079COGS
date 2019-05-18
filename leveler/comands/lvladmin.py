@@ -72,6 +72,22 @@ async def msgcredits(ctx, credits: int = 0):
     await ctx.send(f"**Credits per message logged set to `{credits}`.**")
 
 
+@checks.is_owner()
+@lvladmin.command(pass_context=True, no_pm=True)
+async def chat_cooldown(ctx, cooldown: int = 120):
+    """Cooldown for experience gained. Default = 120"""
+    await db.chat_cooldown.set(cooldown)
+    await ctx.send(f"**Chat cooldown per message logged set to `{cooldown}`.**")
+
+
+@checks.is_owner()
+@lvladmin.command(pass_context=True, no_pm=True)
+async def rep_cooldown(ctx, cooldown: int = 43200):
+    """Cooldown for giving reputation. Default = 43200"""
+    await db.rep_cooldown.set(cooldown)
+    await ctx.send(f"**Rep cooldown per message logged set to `{cooldown}`.**")
+
+
 @lvladmin.command(name="lock", pass_context=True, no_pm=True)
 async def lvlmsglock(ctx):
     """Locks levelup messages to one channel. Disable command via locked channel."""
