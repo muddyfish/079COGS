@@ -38,9 +38,7 @@ settings = {
     "badge_type": "circles",
     "bg_price": 0,
     "chat_cooldown": 120,
-    "lvl_msg_lock": {},
     "mention": True,
-    "msg_credits": {},
     "rep_cooldown": 43200,
 }
 
@@ -81,6 +79,8 @@ default_member = {
 default_guild = {
     "badges": {},
     "badge_links": {},
+    "msg_credits": 0,
+    "lvl_msg_lock": None,
     "disabled": False,
     "private_lvl_msg": False,
     "lvl_msg": False

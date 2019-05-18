@@ -1,10 +1,10 @@
 from redbot.core import commands
 import discord
-from redbot.core.utils.chat_formatting import pagify
 import operator
-from leveler.leveler import db
+
+from redbot.core.utils.chat_formatting import pagify
 from redbot.core import checks, bank
-from ..static_methods import _badge_convert_dict, _is_hex, get_user_name, _valid_image_url, get_user_display_name
+from ..static_methods import _is_hex, get_user_name, _valid_image_url
 
 
 from ..config import db
