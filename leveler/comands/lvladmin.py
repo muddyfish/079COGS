@@ -2,7 +2,6 @@ from redbot.core import commands
 import discord
 from redbot.core import checks
 from ..config import db
-from ..path_munger import fileIO
 from ..static_methods import _valid_image_url
 from ..permissions import leveler_enabled
 
@@ -12,7 +11,6 @@ prefix = "!"
 
 @checks.admin_or_permissions(manage_guild=True)
 @commands.group(pass_context=True)
-@leveler_enabled
 async def lvladmin(ctx):
     """Admin Toggle Features"""
     if ctx.invoked_subcommand is None:

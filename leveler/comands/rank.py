@@ -7,11 +7,10 @@ from redbot.core import commands, bank
 from discord import Member, File
 from PIL import ImageFont, Image, ImageDraw
 
-from ..leveler import font_unicode_file
 from ..static_methods import _find_guild_rank, _add_corners, _required_exp, _truncate_text, _center, get_user_name, get_user_display_name
 from ..config import db
 from ..permissions import leveler_enabled
-from ..path_munger import font_heavy_file, font_bold_file, font_thin_file
+from ..path_munger import font_heavy_file, font_bold_file, font_thin_file, font_unicode_file
 
 
 @commands.cooldown(1, 10, commands.BucketType.user)

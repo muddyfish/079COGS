@@ -5,7 +5,6 @@ import platform
 import operator
 import textwrap
 
-from ..leveler import font_unicode_file
 from ..static_methods import _contrast, _truncate_text, _center, _find_global_rank, _add_corners, _level_exp, _find_level, _required_exp, get_user_name
 
 from aiohttp import ClientSession
@@ -14,7 +13,7 @@ from io import BytesIO
 
 from ..config import db
 from ..permissions import leveler_enabled
-from ..path_munger import font_thin_file, font_bold_file, font_heavy_file, font_file
+from ..path_munger import font_thin_file, font_bold_file, font_heavy_file, font_file, font_unicode_file
 
 
 @commands.cooldown(1, 10, commands.BucketType.user)

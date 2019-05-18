@@ -1,7 +1,6 @@
 from math import sqrt
 import os
 from .path_munger import fileIO
-from .leveler import db
 from PIL import Image, ImageDraw
 import operator
 import re
@@ -16,7 +15,7 @@ from io import BytesIO
 
 from .config import db
 
-from typing import NoReturn, Dict
+from typing import Dict
 from discord import Member, Guild
 from redbot.core import bank
 
