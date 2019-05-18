@@ -66,7 +66,7 @@ async def draw_rank(session: ClientSession, user: Member) -> Image:
     member_info = db.member(user)
     user_exp = await member_info.current_exp()
     user_level = await member_info.level()
-    exp_color = await user_info.rank_info_color()
+    exp_color = tuple(await user_info.rank_info_color())
 
     # set canvas
     width = 390
