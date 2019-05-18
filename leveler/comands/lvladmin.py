@@ -98,7 +98,7 @@ async def lvlmsglock(ctx):
     lvl_msg_lock = await guild_info.lvl_msg_lock()
 
     if lvl_msg_lock == channel.id:
-        await guild_info.lvl_msg_lock.unset()
+        await guild_info.lvl_msg_lock.clear()
         return await ctx.send("**Level-up message lock disabled.**")
 
     await guild_info.lvl_msg_lock.set(channel.id)
