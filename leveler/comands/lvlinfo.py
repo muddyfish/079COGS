@@ -48,7 +48,7 @@ async def lvlinfo(ctx, user: discord.Member = None):
     if badge_col_color:
         msg += f"Badge section color: {_rgb_to_hex(badge_col_color)}\n"
 
-    rank_info_color = await member_info.rank_info_color()
+    rank_info_color = await user_info.rank_info_color()
     if rank_info_color:
         msg += f"Rank info color: {_rgb_to_hex(rank_info_color)}\n"
 

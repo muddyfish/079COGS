@@ -37,8 +37,8 @@ badges = {}
 settings = {
     "badge_type": "circles",
     "bg_price": 0,
-    "chat_cooldown": 0,
-    "mention": True,
+    "chat_cooldown": 120,
+    "mention": False,
     "rep_cooldown": 43200,
 }
 
@@ -56,13 +56,15 @@ default_user = {
     "title": "",
     "info": "I am a mysterious person.",
     "rep": 0,
+    "rep_block": 0,
     "badges": {},
     "active_badges": {},
     "rep_color": (92, 130, 203, 230),
     "badge_col_color": (128, 151, 165, 230),
     "profile_info_color": (30, 30, 30, 220),
     "profile_exp_color": (255, 255, 255, 230),
-    "levelup_info_color": (30, 30, 30, 150)
+    "levelup_info_color": (30, 30, 30, 150),
+    "rank_info_color": (140, 140, 140, 230)
 }
 
 default_role = {
@@ -73,8 +75,7 @@ default_role = {
 default_member = {
     "level": 0,
     "current_exp": 0,
-    "chat_block": 0,
-    "rank_info_color": (140, 140, 140, 230)
+    "chat_block": 0
 }
 
 default_guild = {

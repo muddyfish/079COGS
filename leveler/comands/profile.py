@@ -65,7 +65,7 @@ async def draw_profile(user: Member, session: ClientSession) -> Image:
     user_info = db.user(user)
 
     # get urls
-    bg_url = await user_info.rank_background()
+    bg_url = await user_info.profile_background()
     profile_url = user.avatar_url
 
     async with session.get(bg_url) as r:

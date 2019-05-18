@@ -265,7 +265,7 @@ async def profilebg(ctx, *, image_name: str):
     user_info = db.user(user)
     backgrounds = await db.backgrounds()
 
-    if image_name in backgrounds["profile"].keys():
+    if image_name in backgrounds["profile"]:
         if await process_purchase(ctx):
             await user_info.profile_background.set(backgrounds["profile"][image_name])
             await ctx.send("**Your new profile background has been successfully set!**")
